@@ -1,0 +1,185 @@
+<section class="form-section" id="seguimientoSection">
+
+    <div class="section-header">
+        <div>
+            <h2>Seguimiento y control</h2>
+
+            <p>
+                Información requerida para el seguimiento
+                de la terapia antimicrobiana.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="grid-layout">
+
+        <div class="form-group col-6">
+
+            <label>
+
+                Nombre completo del médico que prescribe
+                <span class="req">*</span>
+
+            </label>
+
+            <input class="form-control" type="text" name="medicoPrescribe" data-label="Médico que prescribe"
+                maxlength="200" required>
+        </div>
+
+
+        <div class="form-group col-6">
+            <label>
+                Nombre completo del médico que redacta
+                <span class="req">*</span>
+
+            </label>
+
+            <input class="form-control" type="text" name="medicoRedacta" data-label="Médico que redacta" maxlength="200"
+                required>
+        </div>
+
+
+        <div class="form-group col-6">
+            <label>
+                ¿Se tomaron cultivos previos al inicio de
+                la terapia antibiótica?
+
+                <span class="req">*</span>
+
+            </label>
+
+            <select class="form-control" name="cultivosPrevios" data-label="Cultivos previos" required>
+
+                <option value="">
+                    Seleccione
+                </option>
+
+                <option value="true">
+                    Sí
+                </option>
+
+                <option value="false">
+                    No
+                </option>
+
+            </select>
+        </div>
+
+
+        <div class="form-group col-6">
+            <label>
+                ¿El paciente está infectado?
+                <span class="req">*</span>
+
+            </label>
+
+            <select class="form-control" name="pacienteInfectado" data-label="Paciente infectado" required>
+
+                <option value="">
+                    Seleccione
+                </option>
+
+                <option value="true">
+                    Sí
+                </option>
+
+                <option value="false">
+                    No
+                </option>
+            </select>
+        </div>
+
+
+        <div class="form-group col-6">
+
+            <label>
+                ¿Recibió tratamiento antibiótico previo?
+                <span class="req">*</span>
+
+            </label>
+
+            <select class="form-control" name="tratamientoPrevio" data-label="Tratamiento antibiótico previo"
+                required>
+
+                <option value="">
+                    Seleccione
+                </option>
+
+                <option value="true">
+                    Sí
+                </option>
+
+                <option value="false">
+                    No
+                </option>
+            </select>
+        </div>
+
+
+        <div class="form-group col-12" id="tratamientoPrevioDescContainer" hidden>
+            <label>
+                Describa el tratamiento antibiótico previo
+
+                <span class="req">
+                    *
+                </span>
+
+            </label>
+
+            <textarea class="form-control" name="tratamientoPrevioDesc"
+            data-label="Descripción del tratamiento previo" rows="3" maxlength="1000"></textarea>
+        </div>
+
+
+        <div class="form-group col-6">
+            <label>
+                ¿El antibiótico restringido está ajustado
+                a guía institucional PROA?
+                <span class="req">*</span>
+
+            </label>
+
+            <select class="form-control" name="ajustadoGuiaProa" data-label="Ajuste a guía PROA" required>
+
+                <option value="">
+                    Seleccione
+                </option>
+
+                <option value="true">
+                    Sí
+                </option>
+
+                <option value="false">
+                    No
+                </option>
+            </select>
+        </div>
+
+
+        <div class="form-group col-12" id="guiaIndicacionContainer" hidden>
+            <label>
+                Indicación de la guía PROA
+                <span class="req">*</span>
+
+            </label>
+
+            <textarea class="form-control" name="guiaIndicacion" data-label="Indicación de la guía PROA"
+                rows="3" maxlength="1000"></textarea>
+
+        </div>
+
+
+        <div class="form-group col-12">
+
+            <label>
+                Antecedentes / observaciones adicionales
+            </label>
+
+            <textarea class="form-control" name="antecedentes" rows="3" maxlength="2000"></textarea>
+
+        </div>
+    </div>
+</section>

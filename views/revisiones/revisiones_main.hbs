@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Revisiones - PROA</title>
+  <link rel="stylesheet" href="../admin/css/admin.styles.css">
+  <link rel="stylesheet" href="/revisiones/css/revisiones.styles.css">
+</head>
+
+<body>
+  <div class="admin-page">
+
+    {{> admin_nav}}
+
+    <main class="admin-container">
+      <header class="admin-header">
+        <h1>Revisiones</h1>
+        <p>Historial de decisiones sobre las solicitudes de antimicrobianos. Registro de solo lectura.</p>
+      </header>
+
+      <form class="filtros-bar" method="GET" action="/revisiones">
+        <div class="form-group">
+          <label for="estado">Estado</label>
+          <select id="estado" name="estado" class="admin-control" onchange="this.form.submit()">
+            <option value="" {{#unless estadoActual}}selected{{/unless}}>Todos</option>
+            <option value="APROBADO" {{#if (eq estadoActual "APROBADO" )}}selected{{/if}}>Aprobado</option>
+            <option value="RECHAZADO" {{#if (eq estadoActual "RECHAZADO" )}}selected{{/if}}>Rechazado</option>
+            <option value="OBSERVADO" {{#if (eq estadoActual "OBSERVADO" )}}selected{{/if}}>Observado</option>
+            <option value="SUSPENDIDO" {{#if (eq estadoActual "SUSPENDIDO" )}}selected{{/if}}>Suspendido</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="solicitudId"># Solicitud</label>
+          <input type="text" id="solicitudId" name="solicitudId" class="admin-control" value="{{solicitudIdActual}}"
+            placeholder="Ej: 42">
+        </div>
+        <button type="submit" class="btn-action btn-primary">Filtrar</button>
+      </form>
+
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Solicitud</th>
+              <th>Paciente</th>
+              <th>Estado</th>
+              <th>Revisado por</th>
+              <th>Observación</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each revisiones}}
+            <tr>
+              <td data-label="Fecha" class="text-muted text-sm">{{formatDateTime this.createdAt}}</td>
+              <td data-label="Solicitud">
+                <a  class="text-muted text-sm">#{{this.solicitudId}}</a>
+              </td>
+              <td data-label="Paciente" class="text-main">{{this.solicitud.evaluacion.pacienteNombre}}</td>
+              <td data-label="Estado">
+                <span class="status-pill status-{{lower this.estado}}">{{this.estado}}</span>
+              </td>
+              <td data-label="Revisado por" class="text-muted text-sm">{{this.usuario.nombreCompleto}}</td>
+              <td data-label="Observación" class="text-sm">
+                {{#if this.observacion}}{{this.observacion}}{{else}}<span class="text-muted">—</span>{{/if}}
+              </td>
+              <td data-label="Solicitud">
+                <a href="/revisiones/{{this.id}}" class="btn-action">Ver mas...</a>
+              </td>
+            </tr>
+            {{else}}
+            <tr>
+              <td colspan="6" class="table-empty">No hay revisiones registradas con este filtro.</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <span>Página {{meta.page}} de {{meta.totalPages}} · {{meta.total}} revisión(es)</span>
+        <div class="pagination-links">
+          {{#if hasAnterior}}
+          <a href="/revisiones?page={{paginaAnterior}}{{#if estadoActual}}&estado={{estadoActual}}{{/if}}{{#if solicitudIdActual}}&solicitudId={{solicitudIdActual}}{{/if}}"
+            class="btn-action">← Anterior</a>
+          {{/if}}
+          {{#if hasSiguiente}}
+          <a href="/revisiones?page={{paginaSiguiente}}{{#if estadoActual}}&estado={{estadoActual}}{{/if}}{{#if solicitudIdActual}}&solicitudId={{solicitudIdActual}}{{/if}}"
+            class="btn-action">Siguiente →</a>
+          {{/if}}
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+</body>
+
+</html>

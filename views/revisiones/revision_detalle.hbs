@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Revision de solicitud #{{revision.id}} - PROA</title>
+  <link rel="stylesheet" href="/admin/css/admin.styles.css">
+  <link rel="stylesheet" href="/revisiones/css/revisiones.styles.css">
+</head>
+
+<body>
+  <div class="admin-page">
+
+    {{> admin_nav}}
+
+    <main class="admin-container">
+      <header class="admin-header-actions">
+        <div>
+          <a href="/revisiones" class="btn-cancel">Volver a Historial</a>
+          <h1 style="margin-top: 0.75rem;">Detalle de Revisión #{{revision.id}}</h1>
+          <p class="text-muted text-sm">Registrado el {{formatDateTime revision.createdAt}}</p>
+        </div>
+        <div>
+          <span class="status-pill status-{{lower revision.estado}}" style="font-size: 0.95rem; padding: 0.5rem 1rem;">
+            {{revision.estado}}
+          </span>
+        </div>
+      </header>
+
+      <div class="detalle-grid">
+        <div class="detalle-col">
+
+          <section class="detalle-card">
+            <h3>Información de la Solicitud</h3>
+            <div class="info-group-grid">
+              <div class="info-item">
+                <label>Servicio / Habitación</label>
+                <span>{{revision.solicitud.servicio}} — Hab. {{revision.solicitud.habitacion}}</span>
+              </div>
+              <div class="info-item">
+                <label>Especialidad</label>
+                <span>{{revision.solicitud.especialidad}}</span>
+              </div>
+              <div class="info-item">
+                <label>Médico Prescribe</label>
+                <span>{{revision.solicitud.medicoPrescribe}}</span>
+              </div>
+              <div class="info-item">
+                <label>Médico Redacta</label>
+                <span>{{revision.solicitud.medicoRedacta}}</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="detalle-card">
+            <h3>Antimicrobianos Solicitados</h3>
+            {{#each revision.solicitud.items}}
+            <div class="item-row item-row-{{lower this.antibiotico.tipo}}">
+              <div class="info-group-grid">
+                <div class="info-item">
+                  <label>Medicamento</label>
+                  <span class="text-main" style="font-weight: 700;">
+                    {{this.antibiotico.nombre}}
+                    <span class="tipo-badge tipo-badge-{{lower this.antibiotico.tipo}}">{{this.antibiotico.tipo}}</span>
+                  </span>
+                </div>
+                <div class="info-item">
+                  <label>Dosis / Vía</label>
+                  <span>{{this.dosis}} · {{this.frecuencia}} · {{this.viaAdministracion}}</span>
+                </div>
+                <div class="info-item">
+                  <label>Duración</label>
+                  <span>{{this.duracion}} día(s)</span>
+                </div>
+              </div>
+            </div>
+            {{else}}
+            <p class="text-muted text-sm">No hay ítems registrados en la solicitud.</p>
+            {{/each}}
+          </section>
+
+        </div>
+        <div class="detalle-col">
+
+          <section class="detalle-card highlight-card">
+            <h3>Dictamen PROA</h3>
+            <div class="info-group-stack">
+              <div class="info-item">
+                <label>Revisado Por</label>
+                <span>{{revision.usuario.nombreCompleto}} ({{revision.usuario.rol}})</span>
+              </div>
+              <div class="info-item">
+                <label>Estado Final</label>
+                <div>
+                  <span class="status-pill status-{{lower revision.estado}}">{{revision.estado}}</span>
+                </div>
+              </div>
+              <div class="info-item">
+                <label>Observación / Recomendación</label>
+                <div class="observacion-box">
+                  {{#if revision.observacion}}
+                  {{revision.observacion}}
+                  {{else}}
+                  <em class="text-muted">Sin observaciones registradas.</em>
+                  {{/if}}
+                </div>
+              </div>
+              <div class="info-item" style="margin-top: 0.5rem;">
+                <a href="/solicitudes/{{revision.solicitudId}}" class="btn-action btn-primary"
+                  style="display: block; text-align: center;">
+                  Ver Solicitud Completa (#{{revision.solicitudId}})
+                </a>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+
+</html>

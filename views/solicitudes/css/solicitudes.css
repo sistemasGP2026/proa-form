@@ -1,0 +1,244 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #f8fafc;
+  color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+}
+
+.admin-page {
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-container {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.detail-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+/* Estilos de la barra de búsqueda */
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 320px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: #64748b;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 14px 10px 40px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #0f172a;
+  outline: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.search-box input:focus {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.search-box input::placeholder {
+  color: #94a3b8;
+}
+
+.requests-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.request-card {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+}
+
+.empty-state {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.main-requests-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.main-requests-table th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.725rem;
+  letter-spacing: 0.05em;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.main-requests-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.main-requests-table tbody tr.request-row:hover {
+  background-color: #f8fafc;
+}
+
+/* Elementos de la celda */
+.patient-name {
+  color: #0f172a;
+}
+
+.patient-doc {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #334155;
+  background-color: #f1f5f9;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  letter-spacing: 0.03em;
+  display: inline-block;
+}
+
+.badge-count {
+  background-color: #f1f5f9;
+  color: #475569;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  display: inline-block;
+}
+
+.dropdown-content {
+  background: #ffffff;
+  padding: 12px;
+  border-top: 1px solid #e2e8f0;
+  overflow-x: auto;
+}
+
+.inner-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.inner-table th {
+  background-color: #f1f5f9;
+  color: #475569;
+  font-size: 0.7rem;
+  padding: 8px 12px;
+  border-bottom: 1px solid #cbd5e1;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+}
+
+.inner-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.inner-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-pendiente { background-color: #fef3c7; color: #b45309; }
+.status-aprobado  { background-color: #dcfce7; color: #15803d; }
+.status-rechazado { background-color: #fee2e2; color: #b91c1c; }
+.status-observado { background-color: #e0f2fe; color: #0369a1; }
+
+.badge-indicacion {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.badge-tipo {
+  display: inline-block;
+  background-color: #f1f5f9;
+  color: #475569;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border: 1px solid #cbd5e1;
+}
+
+.date-cell {
+  display: inline-block;
+  font-size: 0.85rem;
+  color: #334155;
+  font-weight: 500;
+}
+
+.text-muted { color: #64748b; }
+.text-sm { font-size: 0.85rem; }
+.text-center { text-align: center; }
+.mb-2 { margin-bottom: 0.5rem; }
+.p-4 { padding: 1rem; }

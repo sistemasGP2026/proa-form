@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Sedes - PROA</title>
+  <link rel="stylesheet" href="/admin/css/admin.styles.css">
+  <link rel="stylesheet" href="/sedes/css/sedes.styles.css">
+</head>
+
+<body>
+  <div class="admin-page">
+
+    {{> admin_nav}}
+
+    <main class="admin-container">
+      <header class="admin-header">
+        <h1>Gestión de Sedes</h1>
+        <p>Administración de sedes activas e inactivas en la plataforma.</p>
+      </header>
+
+      <div class="sedes-toolbar">
+        <div class="sedes-search-box">
+          <input type="text" id="searchSede" class="admin-control" placeholder="Buscar por código o nombre..." onkeyup="filtrarSedes()">
+        </div>
+        <button type="button" class="btn-action btn-primary" onclick="abrirModalCrear()">
+          + Agregar Sede
+        </button>
+      </div>
+
+      <div class="admin-table-wrap">
+        <table class="admin-table" id="tablaSedes">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nombre de la Sede</th>
+              <th>Fecha Creación</th>
+              <th>Estado</th>
+              <th style="text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each sedes}}
+            <tr>
+              <td data-label="Código" class="text-main" style="font-weight: 700;">{{this.codigo}}</td>
+              <td data-label="Nombre" class="text-main">{{this.nombre}}</td>
+              <td data-label="Fecha Creación" class="text-muted text-sm">
+                {{formatDate this.created_at}}
+              </td>
+              <td data-label="Estado">
+                {{#if this.activo}}
+                <span class="status-pill status-aprobado">Activa</span>
+                {{else}}
+                <span class="status-pill status-rechazado">Inactiva</span>
+                {{/if}}
+              </td>
+              <td data-label="Acciones" style="text-align: right;">
+                <button type="button" class="btn-action" onclick="abrirModalEditar({{this.id}}, '{{this.codigo}}', '{{this.nombre}}', {{this.activo}})">
+                  Editar
+                </button>
+                <button type="button" class="btn-logout" onclick="eliminarSede({{this.id}})" style="display: inline-block;">
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+            {{else}}
+            <tr>
+              <td colspan="5" class="table-empty">No hay sedes registradas en el sistema.</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="sede-modal-card">
+      <form id="formSede" onsubmit="guardarSede(event)">
+        <h2 id="modalTitle" class="modal-title">Agregar Sede</h2>
+        <input type="hidden" id="sedeId">
+
+        <div class="form-group">
+          <label for="sedeCodigo">Código de Sede</label>
+          <input type="text" id="sedeCodigo" class="admin-control" maxlength="30" placeholder="Ej: SEDE-NORTE" required>
+        </div>
+
+        <div class="form-group">
+          <label for="sedeNombre">Nombre de la Sede</label>
+          <input type="text" id="sedeNombre" class="admin-control" maxlength="100" placeholder="Ej: Hospital Central" required>
+        </div>
+
+        <div class="form-checkbox-group">
+          <input type="checkbox" id="sedeActivo" checked>
+          <label for="sedeActivo" style="font-size: 0.85rem; color: var(--adm-text-main, #0f172a);">Sede Activa</label>
+        </div>
+
+        <div id="modalError" class="modal-error" hidden></div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+          <button type="submit" class="btn-save-modal">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const overlay = document.getElementById('modalOverlay');
+    const modalError = document.getElementById('modalError');
+
+    function mostrarErrorModal(mensaje) {
+      modalError.textContent = mensaje;
+      modalError.hidden = false;
+    }
+
+    function limpiarErrorModal() {
+      modalError.hidden = true;
+      modalError.textContent = '';
+    }
+
+    function abrirModalCrear() {
+      limpiarErrorModal();
+      document.getElementById('modalTitle').innerText = 'Agregar Sede';
+      document.getElementById('sedeId').value = '';
+      document.getElementById('sedeCodigo').value = '';
+      document.getElementById('sedeNombre').value = '';
+      document.getElementById('sedeActivo').checked = true;
+      overlay.classList.add('active');
+    }
+
+    function abrirModalEditar(id, codigo, nombre, activo) {
+      limpiarErrorModal();
+      document.getElementById('modalTitle').innerText = 'Editar Sede';
+      document.getElementById('sedeId').value = id;
+      document.getElementById('sedeCodigo').value = codigo;
+      document.getElementById('sedeNombre').value = nombre;
+      document.getElementById('sedeActivo').checked = activo;
+      overlay.classList.add('active');
+    }
+
+    function cerrarModal() {
+      overlay.classList.remove('active');
+    }
+
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) cerrarModal();
+    });
+
+    async function guardarSede(event) {
+      event.preventDefault();
+      limpiarErrorModal();
+
+      const id = document.getElementById('sedeId').value;
+      const payload = {
+        codigo: document.getElementById('sedeCodigo').value,
+        nombre: document.getElementById('sedeNombre').value,
+        activo: document.getElementById('sedeActivo').checked
+      };
+
+      const url = id ? `/sedes/${id}` : '/sedes';
+      const method = id ? 'PUT' : 'POST';
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          window.location.reload();
+          return;
+        }
+
+        const data = await res.json().catch(() => null);
+        mostrarErrorModal(data?.message || 'No fue posible guardar la sede.');
+      } catch (e) {
+        console.error('Error al procesar la sede:', e);
+        mostrarErrorModal('Error de conexión con el servidor.');
+      }
+    }
+
+    async function eliminarSede(id) {
+      if (!confirm('¿Deseas eliminar permanentemente esta sede?')) return;
+
+      try {
+        const res = await fetch(`/sedes/${id}`, { method: 'DELETE' });
+
+        if (res.ok) {
+          window.location.reload();
+          return;
+        }
+
+        const data = await res.json().catch(() => null);
+        alert(data?.message || 'No fue posible eliminar la sede.');
+      } catch (e) {
+        console.error('Error al eliminar la sede:', e);
+        alert('Error de conexión con el servidor.');
+      }
+    }
+
+    function filtrarSedes() {
+      const query = document.getElementById('searchSede').value.toLowerCase();
+      const rows = document.querySelectorAll('#tablaSedes tbody tr');
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+      });
+    }
+  </script>
+</body>
+
+</html>

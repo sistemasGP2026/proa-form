@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnósticos Infecciosos - PROA</title>
+    <link rel="stylesheet" href="../admin/css/admin.styles.css">
+    <link rel="stylesheet" href="/diagnosticos/css/diagnosticos.styles.css">
+</head>
+
+<body>
+    <div class="admin-page">
+
+        {{> admin_nav}}
+
+        <main class="admin-container">
+            <header class="admin-header">
+                <h1>Diagnósticos Infecciosos</h1>
+                <p>Gestión de diagnósticos infecciosos relacionados registrados en el sistema.</p>
+            </header>
+
+            <div class="diagnosticos-toolbar">
+                <div class="diagnosticos-search-box">
+                    <input type="text" id="searchDiagnostico" class="admin-control"
+                        placeholder="Buscar por nombre de diagnóstico..." onkeyup="filtrarDiagnosticos()">
+                </div>
+                <button type="button" class="btn-action btn-primary" onclick="abrirModalCrear()">
+                    + Agregar Diagnóstico
+                </button>
+            </div>
+
+            <div class="admin-table-wrap">
+                <table class="admin-table" id="tablaDiagnosticos">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre del Diagnóstico</th>
+                            <th>Fecha Creación</th>
+                            <th>Estado</th>
+                            <th style="text-align: right;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each diagnosticos}}
+                        <tr>
+                            <td data-label="ID" class="text-muted text-sm">{{this.id}}</td>
+                            <td data-label="Nombre" class="text-main" style="font-weight: 600;">{{this.nombre}}</td>
+                            <td data-label="Fecha Creación" class="text-muted text-sm">
+                                {{formatDate this.created_at}}
+                            </td>
+                            <td data-label="Estado">
+                                {{#if this.activo}}
+                                <span class="status-pill status-aprobado">Activo</span>
+                                {{else}}
+                                <span class="status-pill status-rechazado">Inactivo</span>
+                                {{/if}}
+                            </td>
+                            <td data-label="Acciones" style="text-align: right;">
+                                <button type="button" class="btn-action"
+                                    onclick="abrirModalEditar({{this.id}}, '{{this.nombre}}', {{this.activo}})">
+                                    Editar
+                                </button>
+                                <button type="button" class="btn-logout" onclick="eliminarDiagnostico({{this.id}})"
+                                    style="display: inline-block;">
+                                    Eliminar
+                                </button>
+                            </td>
+                        </tr>
+                        {{else}}
+                        <tr>
+                            <td colspan="5" class="table-empty">No hay diagnósticos registrados.</td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="diagnostico-modal-card">
+            <form id="formDiagnostico" onsubmit="guardarDiagnostico(event)">
+                <h2 id="modalTitle" class="modal-title">Agregar Diagnóstico</h2>
+                <input type="hidden" id="diagnosticoId">
+
+                <div class="form-group">
+                    <label for="diagnosticoNombre">Nombre del Diagnóstico</label>
+                    <input type="text" id="diagnosticoNombre" class="admin-control" maxlength="150"
+                        placeholder="Ej: Infección del tracto urinario" required>
+                </div>
+
+                <div class="form-checkbox-group">
+                    <input type="checkbox" id="diagnosticoActivo" checked>
+                    <label for="diagnosticoActivo"
+                        style="font-size: 0.85rem; color: var(--adm-text-main, #0f172a);">Diagnóstico Activo</label>
+                </div>
+
+                <div id="modalError" class="modal-error" hidden></div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+                    <button type="submit" class="btn-save-modal">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const overlay = document.getElementById('modalOverlay');
+        const modalError = document.getElementById('modalError');
+
+        function mostrarErrorModal(mensaje) {
+            modalError.textContent = mensaje;
+            modalError.hidden = false;
+        }
+
+        function limpiarErrorModal() {
+            modalError.hidden = true;
+            modalError.textContent = '';
+        }
+
+        function abrirModalCrear() {
+            limpiarErrorModal();
+            document.getElementById('modalTitle').innerText = 'Agregar Diagnóstico';
+            document.getElementById('diagnosticoId').value = '';
+            document.getElementById('diagnosticoNombre').value = '';
+            document.getElementById('diagnosticoActivo').checked = true;
+            overlay.classList.add('active');
+        }
+
+        function abrirModalEditar(id, nombre, activo) {
+            limpiarErrorModal();
+            document.getElementById('modalTitle').innerText = 'Editar Diagnóstico';
+            document.getElementById('diagnosticoId').value = id;
+            document.getElementById('diagnosticoNombre').value = nombre;
+            document.getElementById('diagnosticoActivo').checked = Boolean(activo);
+            overlay.classList.add('active');
+        }
+
+        function cerrarModal() {
+            overlay.classList.remove('active');
+        }
+
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) cerrarModal();
+        });
+
+        async function guardarDiagnostico(event) {
+            event.preventDefault();
+            limpiarErrorModal();
+
+            const id = document.getElementById('diagnosticoId').value;
+            const payload = {
+                nombre: document.getElementById('diagnosticoNombre').value,
+                activo: document.getElementById('diagnosticoActivo').checked
+            };
+
+            const url = id ? `/diagnosticos/${id}` : '/diagnosticos';
+            const method = id ? 'PATCH' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) { window.location.reload(); return; }
+
+                const data = await res.json().catch(() => null);
+                mostrarErrorModal(data?.message || 'No fue posible guardar el diagnóstico.');
+            } catch (e) {
+                console.error('Error al procesar el diagnóstico:', e);
+                mostrarErrorModal('Error de conexión con el servidor.');
+            }
+        }
+
+        async function eliminarDiagnostico(id) {
+            if (!confirm('¿Deseas eliminar este diagnóstico?')) return;
+
+            try {
+                const res = await fetch(`/diagnosticos/${id}`, { method: 'DELETE' });
+                if (res.ok) { window.location.reload(); return; }
+
+                const data = await res.json().catch(() => null);
+                alert(data?.message || 'No fue posible eliminar el diagnóstico.');
+            } catch (e) {
+                console.error('Error al eliminar el diagnóstico:', e);
+                alert('Error de conexión con el servidor.');
+            }
+        }
+
+        function filtrarDiagnosticos() {
+            const query = document.getElementById('searchDiagnostico').value.toLowerCase();
+            const rows = document.querySelectorAll('#tablaDiagnosticos tbody tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Servicios - PROA</title>
+  <link rel="stylesheet" href="../admin/css/admin.styles.css">
+  <link rel="stylesheet" href="/servicios/css/servicios.styles.css">
+</head>
+
+<body>
+  <div class="admin-page">
+
+    {{> admin_nav}}
+
+    <main class="admin-container">
+      <header class="admin-header">
+        <h1>Servicios</h1>
+        <p>Gestión de los servicios hospitalarios registrados en el sistema.</p>
+      </header>
+
+      <div class="servicios-toolbar">
+        <div class="servicios-search-box">
+          <input type="text" id="searchServicio" class="admin-control" placeholder="Buscar por nombre de servicio..." onkeyup="filtrarServicios()">
+        </div>
+        <button type="button" class="btn-action btn-primary" onclick="abrirModalCrear()">
+          + Agregar Servicio
+        </button>
+      </div>
+
+      <div class="admin-table-wrap">
+        <table class="admin-table" id="tablaServicios">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre del Servicio</th>
+              <th>Fecha Creación</th>
+              <th>Estado</th>
+              <th style="text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each servicios}}
+            <tr>
+              <td data-label="ID" class="text-muted text-sm">{{this.id}}</td>
+              <td data-label="Nombre" class="text-main" style="font-weight: 600;">{{this.nombre}}</td>
+              <td data-label="Fecha Creación" class="text-muted text-sm">
+                {{formatDate this.created_at}}
+              </td>
+              <td data-label="Estado">
+                {{#if this.activo}}
+                <span class="status-pill status-aprobado">Activo</span>
+                {{else}}
+                <span class="status-pill status-rechazado">Inactivo</span>
+                {{/if}}
+              </td>
+              <td data-label="Acciones" style="text-align: right;">
+                <button type="button" class="btn-action" onclick="abrirModalEditar({{this.id}}, '{{this.nombre}}', {{this.activo}})">
+                  Editar
+                </button>
+                <button type="button" class="btn-logout" onclick="eliminarServicio({{this.id}})" style="display: inline-block;">
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+            {{else}}
+            <tr>
+              <td colspan="5" class="table-empty">No hay servicios registrados.</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="servicio-modal-card">
+      <form id="formServicio" onsubmit="guardarServicio(event)">
+        <h2 id="modalTitle" class="modal-title">Agregar Servicio</h2>
+        <input type="hidden" id="servicioId">
+
+        <div class="form-group">
+          <label for="servicioNombre">Nombre del Servicio</label>
+          <input type="text" id="servicioNombre" class="admin-control" maxlength="100" placeholder="Ej: Urgencias" required>
+        </div>
+
+        <div class="form-checkbox-group">
+          <input type="checkbox" id="servicioActivo" checked>
+          <label for="servicioActivo" style="font-size: 0.85rem; color: var(--adm-text-main, #0f172a);">Servicio Activo</label>
+        </div>
+
+        <div id="modalError" class="modal-error" hidden></div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+          <button type="submit" class="btn-save-modal">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const overlay = document.getElementById('modalOverlay');
+    const modalError = document.getElementById('modalError');
+
+    function mostrarErrorModal(mensaje) {
+      modalError.textContent = mensaje;
+      modalError.hidden = false;
+    }
+
+    function limpiarErrorModal() {
+      modalError.hidden = true;
+      modalError.textContent = '';
+    }
+
+    function abrirModalCrear() {
+      limpiarErrorModal();
+      document.getElementById('modalTitle').innerText = 'Agregar Servicio';
+      document.getElementById('servicioId').value = '';
+      document.getElementById('servicioNombre').value = '';
+      document.getElementById('servicioActivo').checked = true;
+      overlay.classList.add('active');
+    }
+
+    function abrirModalEditar(id, nombre, activo) {
+      limpiarErrorModal();
+      document.getElementById('modalTitle').innerText = 'Editar Servicio';
+      document.getElementById('servicioId').value = id;
+      document.getElementById('servicioNombre').value = nombre;
+      document.getElementById('servicioActivo').checked = Boolean(activo);
+      overlay.classList.add('active');
+    }
+
+    function cerrarModal() {
+      overlay.classList.remove('active');
+    }
+
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) cerrarModal();
+    });
+
+    async function guardarServicio(event) {
+      event.preventDefault();
+      limpiarErrorModal();
+
+      const id = document.getElementById('servicioId').value;
+      const payload = {
+        nombre: document.getElementById('servicioNombre').value,
+        activo: document.getElementById('servicioActivo').checked
+      };
+
+      const url = id ? `/servicios/${id}` : '/servicios';
+      const method = id ? 'PATCH' : 'POST';
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) { window.location.reload(); return; }
+
+        const data = await res.json().catch(() => null);
+        mostrarErrorModal(data?.message || 'No fue posible guardar el servicio.');
+      } catch (e) {
+        console.error('Error al procesar el servicio:', e);
+        mostrarErrorModal('Error de conexión con el servidor.');
+      }
+    }
+
+    async function eliminarServicio(id) {
+      if (!confirm('¿Deseas eliminar este servicio?')) return;
+
+      try {
+        const res = await fetch(`/servicios/${id}`, { method: 'DELETE' });
+        if (res.ok) { window.location.reload(); return; }
+
+        const data = await res.json().catch(() => null);
+        alert(data?.message || 'No fue posible eliminar el servicio.');
+      } catch (e) {
+        console.error('Error al eliminar el servicio:', e);
+        alert('Error de conexión con el servidor.');
+      }
+    }
+
+    function filtrarServicios() {
+      const query = document.getElementById('searchServicio').value.toLowerCase();
+      const rows = document.querySelectorAll('#tablaServicios tbody tr');
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+      });
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,341 @@
+<section class="form-section" id="formulacionSection">
+    <div class="section-header">
+        <div>
+            <h2>Formulación</h2>
+
+            <p>
+                Seleccione la indicación y los antibióticos prescritos.
+            </p>
+        </div>
+    </div>
+
+    <div class="notice">
+        <strong>
+            Antibióticos restringidos:
+        </strong>
+        su uso por más de 48 horas requiere autorización
+        de infectología.
+        <br>
+        <strong>
+            Antibióticos vigilados:
+        </strong>
+        su uso será vigilado activamente por el grupo
+        de infectología.
+    </div>
+
+
+    <div class="grid-layout">
+
+        <div class="form-group col-6 campo-destacado">
+            <label for="indicacionAntibiotico">
+                Indicación del antibiótico
+                <span class="req">*</span>
+
+            </label>
+
+            <select id="indicacionAntibiotico" class="form-control select-destacado" name="indicacionAntibiotico"
+                data-label="Indicación del antibiótico" required>
+
+                <option value="">
+                    Seleccione
+                </option>
+
+                <option value="TRATAMIENTO">
+                    Tratamiento
+                </option>
+
+                <option value="PROFILAXIS">
+                    Profilaxis
+                </option>
+            </select>
+        </div>
+
+        <div class="form-group col-6 campo-destacado">
+            <label>
+                Cantidad de antibióticos
+                <span class="req">*</span>
+            </label>
+
+
+            <div class="radio-group" id="cantidadAntibioticos">
+
+                <label class="radio-card">
+                    <input type="radio" name="cantidad_antibioticos" value="1" required>
+                    <span>
+                        1 antibiótico
+                    </span>
+                </label>
+
+
+                <label class="radio-card">
+                    <input type="radio" name="cantidad_antibioticos" value="2">
+                    <span>
+                        2 antibióticos
+                    </span>
+                </label>
+
+
+                <label class="radio-card" id="cantidad3Card">
+                    <input type="radio" name="cantidad_antibioticos" value="3">
+                    <span>3 antibióticos</span>
+
+                </label>
+
+            </div>
+
+        </div>
+
+    </div>
+    {{> profilaxis}}
+
+    <div class="antibiotico-lista">
+        <div class="lista-header">
+            <h3>Antibióticos restringidos</h3>
+
+            <span>
+                Seleccione los antibióticos requeridos.
+            </span>
+
+        </div>
+
+
+        <div class="antibiotico-options" id="restringidosContainer">
+            {{#each restringidos}}
+            <label class="antibiotico-option">
+
+                <input type="checkbox" class="antibiotico-check" value="{{nombre}}" data-id="{{id}}" data-nombre="{{nombre}}" data-tipo="{{tipo}}">
+                <span>
+                    <strong>
+                        {{this.nombre}}
+                    </strong>
+                </span>
+            </label>
+            {{/each}}
+        </div>
+    </div>
+
+    <div class="antibiotico-lista">
+        <div class="lista-header">
+            <h3>
+                Antibióticos vigilados
+            </h3>
+            <span>
+                Seleccione los antibióticos requeridos.
+            </span>
+        </div>
+
+        <div class="antibiotico-options" id="vigiladosContainer">
+
+            {{#each vigilados}}
+
+            <label class="antibiotico-option">
+                <input type="checkbox" class="antibiotico-check" value="{{id}}" data-id="{{id}}" data-nombre="{{nombre}}" data-tipo="{{tipo}}">
+                <span>
+                    <strong>
+                        {{this.nombre}}
+                    </strong>
+                </span>
+            </label>
+            {{/each}}
+        </div>
+    </div>
+
+    <div id="rg-container" class="medicamentos-container">
+    </div>
+
+    <template id="tpl-antibiotico">
+
+        <div class="antibiotico-form antibiotico-seleccionado">
+
+            <div class="antibiotico-header">
+                <div class="antibiotico-title">
+                    <span class="antibiotico-tipo" data-field="tipo"></span>
+                    <h3 data-field="nombre"></h3>
+
+                </div>
+
+                <div class="antibiotico-check-mark">
+                    Seleccionado
+                </div>
+
+            </div>
+
+
+            <div class="grid-layout">
+                <div class="form-group col-6">
+
+                    <label>
+                        Cantidad
+                        <span class="req">
+                            *
+                        </span>
+
+                    </label>
+
+                    <input class="form-control campo-medicamento" type="number" data-name="cantidad" min="1" step="1"
+                        required>
+
+                </div>
+
+                <div class="form-group col-6">
+                    <label>
+                        Dosis
+                        <span class="req">*</span>
+
+                    </label>
+
+                    <input class="form-control campo-medicamento" type="number" data-name="dosis" min="0.01" step="0.01"
+                        required>
+                </div>
+
+                <div class="form-group col-6">
+                    <label>
+                        Unidad de dosis
+                        <span class="req">
+                            *
+                        </span>
+                    </label>
+
+                    <select class="form-control campo-medicamento" data-name="unidadDosis" required>
+
+                        <option value="">
+                            Seleccione
+                        </option>
+
+                        <option value="mg">
+                            mg
+                        </option>
+
+                        <option value="g">
+                            g
+                        </option>
+
+                        <option value="mcg">
+                            mcg
+                        </option>
+
+                        <option value="UI">
+                            UI
+                        </option>
+                    </select>
+
+                </div>
+
+                <div class="form-group col-6">
+
+                    <label>
+                        Vía de administración
+                        <span class="req">*</span>
+                    </label>
+
+                    <select class="form-control campo-medicamento" data-name="via" required>
+
+                        <option value="">
+                            Seleccione
+                        </option>
+
+                        <option value="Intravenosa">
+                            Intravenosa
+                        </option>
+
+                        <option value="Oral">
+                            Oral
+                        </option>
+
+                        <option value="Intramuscular">
+                            Intramuscular
+                        </option>
+
+                        <option value="Subcutánea">
+                            Subcutánea
+                        </option>
+                    </select>
+
+                </div>
+
+                <div class="form-group col-6 campo-destacado">
+                    <label>
+                        Frecuencia
+                        <span class="req">*</span>
+                    </label>
+
+                    <select class="form-control campo-medicamento select-destacado" data-name="frecuencia" required>
+
+                        <option value="">
+                            Seleccione la frecuencia
+                        </option>
+
+                        <option value="Cada 4 horas">
+                            Cada 4 horas
+                        </option>
+
+                        <option value="Cada 6 horas">
+                            Cada 6 horas
+                        </option>
+
+                        <option value="Cada 8 horas">
+                            Cada 8 horas
+                        </option>
+
+                        <option value="Cada 12 horas">
+                            Cada 12 horas
+                        </option>
+
+                        <option value="Cada 24 horas">
+                            Cada 24 horas
+                        </option>
+
+                        <option value="OTRO">
+                            Otro
+                        </option>
+                    </select>
+
+                </div>
+
+                <div class="form-group col-6 frecuencia-otro" hidden>
+                    <label>Otra frecuencia</label>
+
+                    <input class="form-control campo-medicamento" type="text" data-name="frecuenciaOtro" maxlength="50"
+                        placeholder="Ej. cada 48 horas">
+                </div>
+
+                <div class="form-group col-6 campo-destacado">
+                    <label>
+                        Fecha de inicio
+                        <span class="req">*</span>
+                    </label>
+
+                    <input class="form-control campo-medicamento" type="date" data-name="fechaInicio" required>
+                </div>
+
+                <div class="form-group col-6 campo-destacado">
+                    <label>Duración<span class="req">*</span>
+                    </label>
+                    <select class="form-control campo-medicamento" data-name="duracion" required>
+                        <option value="">Seleccione</option>
+                    </select>
+                </div>
+
+                <div class="form-group col-6 campo-fecha-final">
+                    <label>
+                        Fecha final estimada
+                    </label>
+
+                    <input class="form-control" type="date" data-name="fechaFin" readonly>
+                </div>
+
+                <div class="form-group col-12">
+                    <label>Observaciones / Justificación</label>
+
+                    <textarea class="form-control campo-medicamento" data-name="observaciones" rows="3"
+                        maxlength="1000"></textarea>
+
+                </div>
+
+            </div>
+
+        </div>
+    </template>
+</section>
+
+{{> template/antibioticos}}

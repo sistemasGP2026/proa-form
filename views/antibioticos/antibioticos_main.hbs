@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antibióticos - PROA</title>
+    <link rel="stylesheet" href="../admin/css/admin.styles.css">
+    <link rel="stylesheet" href="/antibioticos/css/antibioticos.styles.css">
+</head>
+
+<body>
+    <div class="admin-page">
+
+        {{> admin_nav}}
+
+        <main class="admin-container">
+            <header class="admin-header">
+                <h1>Antibióticos</h1>
+                <p>Gestión del catálogo de antibióticos restringidos y vigilados.</p>
+            </header>
+
+            <div class="antibioticos-toolbar">
+                <div class="antibioticos-search-box">
+                    <input type="text" id="searchAntibiotico" class="admin-control"
+                        placeholder="Buscar por código o nombre..." onkeyup="filtrarAntibioticos()">
+                </div>
+                <button type="button" class="btn-action btn-primary" onclick="abrirModalCrear()">
+                    + Agregar Antibiótico
+                </button>
+            </div>
+
+            <div class="admin-table-wrap">
+                <table class="admin-table" id="tablaAntibioticos">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Tipo</th>
+                            <th>Fecha Creación</th>
+                            <th>Estado</th>
+                            <th style="text-align: right;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each antibioticos}}
+                        <tr>
+                            <td data-label="Código" class="text-main" style="font-weight: 700;">{{this.codigo}}</td>
+                            <td data-label="Nombre" class="text-main">{{this.nombre}}</td>
+                            <td data-label="Tipo">
+                                {{#if (eq this.tipo "RESTRINGIDO")}}
+                                <span class="status-pill status-rechazado">Restringido</span>
+                                {{else}}
+                                <span class="status-pill status-observado">Vigilado</span>
+                                {{/if}}
+                            </td>
+                            <td data-label="Fecha Creación" class="text-muted text-sm">
+                                {{formatDate this.createdAt}}
+                            </td>
+                            <td data-label="Estado">
+                                {{#if this.activo}}
+                                <span class="status-pill status-aprobado">Activo</span>
+                                {{else}}
+                                <span class="status-pill status-rechazado">Inactivo</span>
+                                {{/if}}
+                            </td>
+                            <td data-label="Acciones" style="text-align: right;">
+                                <button type="button" class="btn-action"
+                                    onclick="abrirModalEditar({{this.id}}, '{{this.codigo}}', '{{this.nombre}}', '{{this.tipo}}', {{this.activo}})">
+                                    Editar
+                                </button>
+                                <button type="button" class="btn-logout" onclick="eliminarAntibiotico({{this.id}})"
+                                    style="display: inline-block;">
+                                    Eliminar
+                                </button>
+                            </td>
+                        </tr>
+                        {{else}}
+                        <tr>
+                            <td colspan="6" class="table-empty">No hay antibióticos registrados.</td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="antibiotico-modal-card">
+            <form id="formAntibiotico" onsubmit="guardarAntibiotico(event)">
+                <h2 id="modalTitle" class="modal-title">Agregar Antibiótico</h2>
+                <input type="hidden" id="antibioticoId">
+
+                <div class="form-group">
+                    <label for="antibioticoCodigo">Código</label>
+                    <input type="text" id="antibioticoCodigo" class="admin-control" maxlength="30"
+                        placeholder="Ej: VANCOMICINA" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="antibioticoNombre">Nombre</label>
+                    <input type="text" id="antibioticoNombre" class="admin-control" maxlength="200"
+                        placeholder="Ej: Vancomicina" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="antibioticoTipo">Tipo</label>
+                    <select id="antibioticoTipo" class="admin-control" required>
+                        <option value="">Seleccione</option>
+                        <option value="RESTRINGIDO">Restringido</option>
+                        <option value="VIGILADO">Vigilado</option>
+                    </select>
+                </div>
+
+                <div class="form-checkbox-group">
+                    <input type="checkbox" id="antibioticoActivo" checked>
+                    <label for="antibioticoActivo"
+                        style="font-size: 0.85rem; color: var(--adm-text-main, #0f172a);">Antibiótico Activo</label>
+                </div>
+
+                <div id="modalError" class="modal-error" hidden></div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+                    <button type="submit" class="btn-save-modal">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const overlay = document.getElementById('modalOverlay');
+        const modalError = document.getElementById('modalError');
+
+        function mostrarErrorModal(mensaje) {
+            modalError.textContent = mensaje;
+            modalError.hidden = false;
+        }
+
+        function limpiarErrorModal() {
+            modalError.hidden = true;
+            modalError.textContent = '';
+        }
+
+        function abrirModalCrear() {
+            limpiarErrorModal();
+            document.getElementById('modalTitle').innerText = 'Agregar Antibiótico';
+            document.getElementById('antibioticoId').value = '';
+            document.getElementById('antibioticoCodigo').value = '';
+            document.getElementById('antibioticoNombre').value = '';
+            document.getElementById('antibioticoTipo').value = '';
+            document.getElementById('antibioticoActivo').checked = true;
+            overlay.classList.add('active');
+        }
+
+        function abrirModalEditar(id, codigo, nombre, tipo, activo) {
+            limpiarErrorModal();
+            document.getElementById('modalTitle').innerText = 'Editar Antibiótico';
+            document.getElementById('antibioticoId').value = id;
+            document.getElementById('antibioticoCodigo').value = codigo;
+            document.getElementById('antibioticoNombre').value = nombre;
+            document.getElementById('antibioticoTipo').value = tipo;
+            document.getElementById('antibioticoActivo').checked = Boolean(activo);
+            overlay.classList.add('active');
+        }
+
+        function cerrarModal() {
+            overlay.classList.remove('active');
+        }
+
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) cerrarModal();
+        });
+
+        async function guardarAntibiotico(event) {
+            event.preventDefault();
+            limpiarErrorModal();
+
+            const id = document.getElementById('antibioticoId').value;
+            const payload = {
+                codigo: document.getElementById('antibioticoCodigo').value,
+                nombre: document.getElementById('antibioticoNombre').value,
+                tipo: document.getElementById('antibioticoTipo').value,
+                activo: document.getElementById('antibioticoActivo').checked
+            };
+
+            const url = id ? `/antibioticos/${id}` : '/antibioticos';
+            const method = id ? 'PATCH' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) { window.location.reload(); return; }
+
+                const data = await res.json().catch(() => null);
+                mostrarErrorModal(data?.message || 'No fue posible guardar el antibiótico.');
+            } catch (e) {
+                console.error('Error al procesar el antibiótico:', e);
+                mostrarErrorModal('Error de conexión con el servidor.');
+            }
+        }
+
+        async function eliminarAntibiotico(id) {
+            if (!confirm('¿Deseas eliminar este antibiótico?')) return;
+
+            try {
+                const res = await fetch(`/antibioticos/${id}`, { method: 'DELETE' });
+                if (res.ok) { window.location.reload(); return; }
+
+                const data = await res.json().catch(() => null);
+                alert(data?.message || 'No fue posible eliminar el antibiótico.');
+            } catch (e) {
+                console.error('Error al eliminar el antibiótico:', e);
+                alert('Error de conexión con el servidor.');
+            }
+        }
+
+        function filtrarAntibioticos() {
+            const query = document.getElementById('searchAntibiotico').value.toLowerCase();
+            const rows = document.querySelectorAll('#tablaAntibioticos tbody tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+
+</html>

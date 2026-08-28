@@ -1,0 +1,75 @@
+<section class="form-section" id="datosPacienteSection">
+  <div class="section-header">
+    <div>
+      <h2>Información general</h2>
+      <p>Datos básicos del paciente y de la atención.</p>
+    </div>
+  </div>
+
+  <div class="grid-layout">
+    <div class="form-group col-6">
+      <label for="nombrePaciente">Nombre del paciente <span class="req">*</span></label>
+      <input type="text" id="nombrePaciente" name="nombrePaciente" class="form-control" data-label="Nombre del paciente"
+        required>
+    </div>
+
+    <div class="form-group col-6">
+      <label for="identificacion">Identificación <span class="req">*</span></label>
+      <input type="text" id="identificacion" name="documento" class="form-control" data-label="Identificación" required>
+    </div>
+
+    <div class="form-group col-12">
+      <label for="diagnosticoInfeccioso">Diagnóstico infeccioso que presenta el paciente <span
+          class="req">*</span></label>
+      <input type="text" id="diagnosticoInfeccioso" name="diagnosticoPrincipal" class="form-control"
+        data-label="Diagnóstico infeccioso" required>
+    </div>
+
+    <div class="form-group col-6">
+      <label for="diagnosticoRelacionado">Diagnóstico infeccioso relacionado <span class="req">*</span></label>
+      <select id="diagnosticoRelacionado" name="diagnostico" class="form-control" data-label="Diagnóstico relacionado"
+        required>
+        data-label="Diagnóstico relacionado" required>
+        <option value="">Seleccione</option>
+        {{#each diagnostico}}
+        <option value="{{this.nombre}}">{{this.nombre}}</option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div class="form-group col-6">
+      <label for="sede">Sede <span class="req">*</span></label>
+      <select id="sede" name="sede" class="form-control" data-label="Sede" required>
+        <option value="">Seleccione</option>
+        {{#each sedes}}
+        <option value="{{this.id}}">{{this.nombre}}</option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div class="form-group col-6">
+      <label for="servicio">Servicio <span class="req">*</span></label>
+      <select id="servicio" name="servicio" class="form-control" data-label="Servicio" required>
+        <option value="">Seleccione</option>
+        {{#each servicios}}
+        <option value="{{this.nombre}}">{{this.nombre}}</option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div class="form-group col-6">
+      <label for="cama">Cama <span class="req">*</span></label>
+      <input type="text" id="cama" name="habitacion" class="form-control" data-label="Cama" required>
+    </div>
+
+    <div class="form-group col-6">
+      <label for="especialidad">Especialidad <span class="req">*</span></label>
+      <select id="especialidad" name="especialidad" class="form-control" data-label="Especialidad" required>
+        <option value="">Seleccione</option>
+        {{#each especialidad}}
+        <option value="{{this.nombre}}">{{this.nombre}}</option>
+        {{/each}}
+      </select>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,55 @@
+<link rel="stylesheet" href="../admin/css/admin.styles.css">
+
+<header class="admin-top-bar">
+  <!-- NAVEGACIÓN -->
+  <nav class="admin-nav-tabs">
+    <a href="/admin" class="nav-tab {{#if (eq currentPath '/solicitudes')}}active{{/if}}">
+      <span>Solicitudes</span>
+    </a>
+
+    <a href="/sedes" class="nav-tab {{#if (eq currentPath '/sedes')}}active{{/if}}">
+      <span>Sedes</span>
+    </a>
+
+    <a href="/especialidades" class="nav-tab {{#if (eq currentPath '/especialidades')}}active{{/if}}">
+      <span>Especialidades</span>
+    </a>
+
+    <a href="/diagnosticos" class="nav-tab {{#if (eq currentPath '/diagnosticos')}}active{{/if}}">
+      <span>Diagnósticos</span>
+    </a>
+
+    <a href="/servicios" class="nav-tab {{#if (eq currentPath '/servicios')}}active{{/if}}">
+      <span>Servicios</span>
+    </a>
+
+    <a href="/antibioticos" class="nav-tab {{#if (eq currentPath '/antibioticos')}}active{{/if}}">
+      <span>Antibióticos</span>
+    </a>
+
+    <a href="/revisiones" class="nav-tab {{#if (eq currentPath '/revisiones')}}active{{/if}}">
+      <span>Revisiones</span>
+    </a>
+
+    <a href="/usuarios" class="nav-tab {{#if (eq currentPath '/usuarios')}}active{{/if}}">
+      <span>Usuarios</span>
+    </a>
+  </nav>
+
+  <!-- USUARIO Y SALIR -->
+  <div class="user-menu">
+    <div class="user-info">
+      <span class="user-name">{{#if usuario.nombre}}{{usuario.nombre}}{{else}}Usuario PROA{{/if}}</span>
+      <span class="user-role">{{#if usuario.rol}}{{usuario.rol}}{{else}}Auditor{{/if}}</span>
+    </div>
+    <button type="button" class="btn-logout" onclick="cerrarSesion()" title="Cerrar Sesión">
+      Salir
+    </button>
+  </div>
+</header>
+
+<script>
+  async function cerrarSesion() {
+    window.location.href = '/auth/sign-in';
+  }
+</script>

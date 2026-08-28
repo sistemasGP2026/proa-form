@@ -1,0 +1,95 @@
+<title>Programa PROA</title>
+<link rel="stylesheet" href="css/admin.styles.css">
+<div class="admin-page">
+  {{> admin_nav}}
+
+  <main class="admin-container">
+
+    <header class="admin-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <div>
+        <h1>Solicitudes de autorizacion PROA</h1>
+        <p>Listado general de solicitudes registradas para control y seguimiento de antibióticos.</p>
+      </div>
+      <div>
+        <a href="/solicitudes/download" class="btn-action btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; padding: 0.6rem 1rem;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Descargar Excel
+        </a>
+      </div>
+    </header>
+
+    <div class="admin-filters">
+      <div class="filter-group filter-search">
+        <input type="text" class="admin-control" placeholder="Buscar por paciente, documento o cama...">
+      </div>
+      <div class="filter-group">
+        <select class="admin-control">
+          <option value="">Todas las sedes</option>
+          {{#each sedes}}
+          <option value="{{this.id}}">{{this.nombre}}</option>
+          {{/each}}
+        </select>
+      </div>
+      <div class="filter-group">
+        <select class="admin-control">
+          <option value="">Todos los estados</option>
+          <option value="PENDIENTE">PENDIENTE</option>
+          <option value="APROBADO">APROBADO</option>
+          <option value="RECHAZADO">RECHAZADO</option>
+          <option value="OBSERVADO">OBSERVADO</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID / Fecha</th>
+            <th>Paciente</th>
+            <th>Ubicación</th>
+            <th>Diagnóstico</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each solicitudes}}
+          <tr>
+            <td data-label="Fecha">
+              <div class="text-muted text-sm">
+                {{formatDate this.submittedAt}}
+              </div>
+            </td>
+            <td data-label="Paciente">
+              <strong class="text-muted text-sm">{{this.evaluacion.pacienteNombre}}</strong>
+            </td>
+            <td data-label="Ubicación">
+              <div>{{this.sede.nombre}}-</div>
+              <div class="text-muted text-sm">{{this.servicio}}</div>
+            </td>
+            <td data-label="Diagnóstico">
+              <span>{{this.evaluacion.diagnosticoPrincipal}}</span>
+            </td>
+            <td data-label="Acciones">
+              <a href="/solicitudes/{{this.id}}" class="btn-action">
+                detalle
+              </a>
+            </td>
+          </tr>
+          {{else}}
+          <tr>
+            <td colspan="6" class="table-empty">
+              No se encontraron solicitudes registradas.
+            </td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>

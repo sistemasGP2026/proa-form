@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuarios - PROA</title>
+    <link rel="stylesheet" href="../admin/css/admin.styles.css">
+    <link rel="stylesheet" href="/usuarios/css/usuarios.styles.css">
+</head>
+
+<body>
+    <div class="admin-page">
+
+        {{> admin_nav}}
+
+        <main class="admin-container">
+            <header class="admin-header">
+                <h1>Usuarios</h1>
+                <p>Gestión de usuarios con acceso al panel administrativo.</p>
+            </header>
+
+            <div class="usuarios-toolbar">
+                <div class="usuarios-search-box">
+                    <input type="text" id="searchUsuario" class="admin-control"
+                        placeholder="Buscar por nombre o usuario..." onkeyup="filtrarUsuarios()">
+                </div>
+                <button type="button" class="btn-action btn-primary" onclick="abrirModalCrear()">
+                    + Agregar Usuario
+                </button>
+            </div>
+
+            <div class="admin-table-wrap">
+                <table class="admin-table" id="tablaUsuarios">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre Completo</th>
+                            <th>Usuario</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th style="text-align: right;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each usuarios}}
+                        <tr>
+                            <td data-label="ID" class="text-muted text-sm">{{this.id}}</td>
+                            <td data-label="Nombre" class="text-main" style="font-weight: 600;">{{this.nombreCompleto}}
+                            </td>
+                            <td data-label="Usuario" class="text-muted text-sm">{{this.usuario}}</td>
+                            <td data-label="Rol">{{this.rol}}</td>
+                            <td data-label="Estado">
+                                {{#if this.activo}}
+                                <span class="status-pill status-aprobado">Activo</span>
+                                {{else}}
+                                <span class="status-pill status-rechazado">Inactivo</span>
+                                {{/if}}
+                            </td>
+                            <td data-label="Acciones" style="text-align: right;">
+                                <button type="button" class="btn-action"
+                                    onclick="abrirModalEditar({{this.id}}, '{{this.nombreCompleto}}', '{{this.usuario}}', '{{this.rol}}', {{this.activo}})">
+                                    Editar
+                                </button>
+                                <button type="button" class="btn-logout" onclick="eliminarUsuario({{this.id}})"
+                                    style="display: inline-block;">
+                                    Eliminar
+                                </button>
+                            </td>
+                        </tr>
+                        {{else}}
+                        <tr>
+                            <td colspan="6" class="table-empty">No hay usuarios registrados.</td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="usuario-modal-card">
+            <form id="formUsuario" onsubmit="guardarUsuario(event)">
+                <h2 id="modalTitle" class="modal-title">Agregar Usuario</h2>
+                <input type="hidden" id="usuarioId">
+
+                <div class="form-group">
+                    <label for="usuarioNombreCompleto">Nombre Completo</label>
+                    <input type="text" id="usuarioNombreCompleto" class="admin-control" maxlength="150"
+                        placeholder="Ej: Juana Pérez" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="usuarioUsuario">Usuario</label>
+                    <input type="text" id="usuarioUsuario" class="admin-control" maxlength="50" placeholder="Ej: jperez"
+                        required>
+                </div>
+
+                <div class="form-group">
+                    <label for="usuarioContrasena">
+                        Contraseña <span id="hintContrasena" class="text-muted text-sm" hidden>(dejar en blanco para no
+                            cambiarla)</span>
+                    </label>
+                    <input type="password" id="usuarioContrasena" class="admin-control" minlength="6"
+                        placeholder="Mínimo 6 caracteres">
+                </div>
+
+                <div class="form-group">
+                    <label for="usuarioRol">Rol</label>
+                    <select id="usuarioRol" class="admin-control" required>
+                        <option value="">Seleccione</option>
+                        <option value="ADMINISTRADOR">Administrador</option>
+                        <option value="AUX_FARMACIA">Auxiliar de Farmacia</option>
+                        <option value="SOLICITANTE">Solicitante</option>
+                    </select>
+                </div>
+
+                <div class="form-checkbox-group">
+                    <input type="checkbox" id="usuarioActivo" checked>
+                    <label for="usuarioActivo" style="font-size: 0.85rem; color: var(--adm-text-main, #0f172a);">Usuario
+                        Activo</label>
+                </div>
+
+                <div id="modalError" class="modal-error" hidden></div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+                    <button type="submit" class="btn-save-modal">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const overlay = document.getElementById('modalOverlay');
+        const modalError = document.getElementById('modalError');
+
+        function mostrarErrorModal(mensaje) {
+            modalError.textContent = mensaje;
+            modalError.hidden = false;
+        }
+
+        function limpiarErrorModal() {
+            modalError.hidden = true;
+            modalError.textContent = '';
+        }
+
+        function abrirModalCrear() {
+            limpiarErrorModal();
+            document.getElementById('modalTitle').innerText = 'Agregar Usuario';
+            document.getElementById('usuarioId').value = '';
+            document.getElementById('usuarioNombreCompleto').value = '';
+            document.getElementById('usuarioUsuario').value = '';
+            document.getElementById('usuarioContrasena').value = '';
+            document.getElementById('usuarioContrasena').required = true;
+            document.getElementById('hintContrasena').hidden = true;
+            document.getElementById('usuarioRol').value = '';
+            document.getElementById('usuarioActivo').checked = true;
+            overlay.classList.add('active');
+        }
+
+        function abrirModalEditar(id, nombreCompleto, usuario, rol, activo) {
+            limpiarErrorModal();
+            document.getElementById('modalTitle').innerText = 'Editar Usuario';
+            document.getElementById('usuarioId').value = id;
+            document.getElementById('usuarioNombreCompleto').value = nombreCompleto;
+            document.getElementById('usuarioUsuario').value = usuario;
+            document.getElementById('usuarioContrasena').value = '';
+            document.getElementById('usuarioContrasena').required = false; // opcional al editar
+            document.getElementById('hintContrasena').hidden = false;
+            document.getElementById('usuarioRol').value = rol;
+            document.getElementById('usuarioActivo').checked = Boolean(activo);
+            overlay.classList.add('active');
+        }
+
+        function cerrarModal() {
+            overlay.classList.remove('active');
+        }
+
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) cerrarModal();
+        });
+
+        async function guardarUsuario(event) {
+            event.preventDefault();
+            limpiarErrorModal();
+
+            const id = document.getElementById('usuarioId').value;
+            const contrasena = document.getElementById('usuarioContrasena').value;
+
+            const payload = {
+                nombreCompleto: document.getElementById('usuarioNombreCompleto').value,
+                usuario: document.getElementById('usuarioUsuario').value,
+                rol: document.getElementById('usuarioRol').value,
+                activo: document.getElementById('usuarioActivo').checked
+            };
+
+            // Solo se manda si se escribió algo — en edición, vacío = no cambiarla
+            if (contrasena) payload.contraseña = contrasena;
+
+            const url = id ? `/usuarios/${id}` : '/usuarios';
+            const method = id ? 'PATCH' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) { window.location.reload(); return; }
+
+                const data = await res.json().catch(() => null);
+                mostrarErrorModal(data?.message || 'No fue posible guardar el usuario.');
+            } catch (e) {
+                console.error('Error al procesar el usuario:', e);
+                mostrarErrorModal('Error de conexión con el servidor.');
+            }
+        }
+
+        async function eliminarUsuario(id) {
+            if (!confirm('¿Deseas eliminar este usuario?')) return;
+
+            try {
+                const res = await fetch(`/usuarios/${id}`, { method: 'DELETE' });
+                if (res.ok) { window.location.reload(); return; }
+
+                const data = await res.json().catch(() => null);
+                alert(data?.message || 'No fue posible eliminar el usuario.');
+            } catch (e) {
+                console.error('Error al eliminar el usuario:', e);
+                alert('Error de conexión con el servidor.');
+            }
+        }
+
+        function filtrarUsuarios() {
+            const query = document.getElementById('searchUsuario').value.toLowerCase();
+            const rows = document.querySelectorAll('#tablaUsuarios tbody tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+
+</html>

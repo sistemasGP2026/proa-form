@@ -1,0 +1,31 @@
+<main class="page">
+    <link rel="stylesheet" href="css/form.styles.css">
+    <div class="form-container">
+
+        <header class="form-header">
+            <div>
+                <a href="/admin" target="_blank" rel="noopener noreferrer" class="proa-badge">Admin</a>
+                <h2>Solicitud de Autorización de Antimicrobianos</h2>
+                <p>Complete la información requerida para la validación del tratamiento antimicrobiano.</p>
+            </div>
+        </header>
+        <form id="proaForm" action="/solicitudes" method="POST" novalidate>
+            {{> datos_paciente}}
+            {{> formulacion restringidos=restringidos vigilados=vigilados}}
+            {{> seguimiento}}
+
+            <div class="nav-row">
+                <button type="submit" class="btn btn-submit">
+                    Enviar solicitud
+                </button>
+            </div>
+        </form>
+
+    </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="/js/datos-paciente.js" defer></script>
+<script src="/js/profilaxis.js" defer></script>
+<script src="/js/formulacion.js" defer></script>
+<script src="/js/seguimiento.js" defer></script>
+<script src="/js/validaciones.js" defer></script>

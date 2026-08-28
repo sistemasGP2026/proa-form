@@ -1,0 +1,134 @@
+<title>Programa PROA - Control de Solicitudes</title>
+<link rel="stylesheet" href="css/solicitudes.css">
+
+<div class="admin-page">
+  <main class="admin-container">
+    <header class="detail-header">
+      <div class="header-left">
+        <h1 class="detail-title">Listado de Medicamentos por Solicitud</h1>
+        <p class="text-muted text-sm">Monitoreo y despacho de antibióticos por paciente.</p>
+      </div>
+
+      <!-- Barra de Búsqueda -->
+      <div class="search-box">
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="searchInput" placeholder="Buscar paciente, documento o estado..."
+          onkeyup="filterRequests()">
+      </div>
+    </header>
+
+    <!-- Contenedor principal de tarjetas -->
+    <div class="requests-feed" id="requestsFeed">
+      {{#each solicitudes}}
+      <div class="request-card">
+        <!-- Tabla Superior: Datos Generales de la Solicitud -->
+        <table class="main-requests-table">
+          <thead>
+            <tr>
+              <th class="text-center">Fecha solicitud</th>
+              <th class="text-center">Paciente</th>
+              <th class="text-center">Documento</th>
+              <th class="text-center">Estado</th>
+              <th class="text-center">Total Meds</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="request-row">
+              <td class="text-center"><span class="request-date">{{formatDate this.submittedAt}}</span></td>
+              <td class="text-center">
+                <strong class="patient-name">
+                  {{#if this.evaluacion.pacienteNombre}}
+                  {{this.evaluacion.pacienteNombre}}
+                  {{else}}
+                  <span class="text-muted">Sin registrar</span>
+                  {{/if}}
+                </strong>
+              </td>
+              <td class="text-center">
+                <span class="patient-doc">
+                  {{#if this.evaluacion.pacienteDocumento}}
+                  {{this.evaluacion.pacienteDocumento}}
+                  {{else}}
+                  <span class="text-muted">Sin registrar</span>
+                  {{/if}}
+                </span>
+              </td>
+              <td class="text-center">
+                <span class="status-badge status-{{statusClass this.status}}">
+                  {{this.status}}
+                </span>
+              </td>
+              <td class="text-center">
+                <span class="badge-count">{{this.items.length}}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Subtabla Inferior: Medicamentos -->
+        <div class="dropdown-content">
+          <table class="detail-table inner-table">
+            <thead>
+              <tr>
+                <th>Antibiótico</th>
+                <th>Tipo</th>
+                <th>Indicación</th>
+                <th>Dosis / Frecuencia</th>
+                <th>Vía</th>
+                <th>Duración</th>
+                <th>Inicio / Fin</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each this.items}}
+              <tr>
+                <td><strong>{{this.antibiotico.nombre}}</strong></td>
+                <td>
+                  <span class="badge-tipo">
+                    {{#if this.antibiotico.tipo}}{{this.antibiotico.tipo}}{{else}}-{{/if}}
+                  </span>
+                </td>
+                <td><span class="badge-indicacion">{{this.indicacion}}</span></td>
+                <td><strong>{{this.dosis}}</strong> <span class="text-muted">/ {{this.frecuencia}}</span></td>
+                <td>{{this.viaAdministracion}}</td>
+                <td><strong>{{this.duracion}}</strong> días</td>
+                <td>
+                  <small class="date-cell">
+                    {{formatOnlyDate this.fechaInicio}} - {{formatOnlyDate this.fechaFin}}
+                  </small>
+                </td>
+              </tr>
+              {{else}}
+              <tr>
+                <td colspan="7" class="text-muted text-center">No hay medicamentos asociados a esta solicitud.</td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {{else}}
+      <div class="empty-state">
+        <p class="text-center text-muted p-4">No hay solicitudes registradas en el sistema.</p>
+      </div>
+      {{/each}}
+    </div>
+  </main>
+</div>
+
+<script>
+  function filterRequests() {
+    const input = document.getElementById('searchInput');
+    const filter = input.value.toLowerCase();
+    const cards = document.querySelectorAll('#requestsFeed .request-card');
+
+    cards.forEach(card => {
+      const text = card.textContent.toLowerCase();
+      card.style.display = text.includes(filter) ? '' : 'none';
+    });
+  }
+</script>

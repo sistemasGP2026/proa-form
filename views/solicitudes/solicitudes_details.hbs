@@ -1,0 +1,266 @@
+<title>Programa PROA</title>
+<link rel="stylesheet" href="css/solicitudes.styles.css">
+
+<div class="admin-page">
+    {{> admin_nav}}
+
+    <main class="admin-container">
+        <header class="detail-header">
+            <div class="header-left">
+                <a href="/admin" class="btn-back">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Volver a solicitudes
+                </a>
+                <h1 class="detail-title">Solicitud #{{solicitud.id}}</h1>
+                <span class="text-muted text-sm">Enviado en: <strong>{{solicitud.submittedAt}}</strong></span>
+            </div>
+        </header>
+
+        <div class="detail-grid">
+
+            <div class="detail-main">
+
+                <!-- INFORMACIÓN DEL PACIENTE -->
+                <section class="detail-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        Información del Paciente
+                    </h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Nombre Completo</label>
+                            <p>{{solicitud.evaluacion.pacienteNombre}}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Documento de Identidad</label>
+                            <p>{{solicitud.evaluacion.pacienteDocumento}}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Sede</label>
+                            <p>{{solicitud.sede.nombre}} <span class="badge-code">({{solicitud.sede.codigo}})</span></p>
+                        </div>
+                        <div class="info-item">
+                            <label>Servicio / Área</label>
+                            <p>{{solicitud.servicio}}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Habitación / Cama</label>
+                            <p>{{solicitud.habitacion}}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Especialidad</label>
+                            <p>{{solicitud.especialidad}}</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TABLA: ANTIBIÓTICOS CON ACCIONES EN LOTE -->
+                <section class="detail-card">
+                    <div class="card-header-actions">
+                        <h2 class="card-title">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                                <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"></path>
+                                <path d="m8.5 8.5 7 7"></path>
+                            </svg>
+                            Antibióticos prescritos
+                        </h2>
+
+                        <!-- Barra de acciones masivas sobre la tabla -->
+                        <div class="bulk-actions">
+                            <button class="btn-proa btn-proa-success btn-sm"
+                                onclick="dictaminarSeleccionados('APROBADO', '#16a34a')">
+                                Aprobar seleccionados
+                            </button>
+                            <button class="btn-proa btn-proa-danger btn-sm"
+                                onclick="dictaminarSeleccionados('SUSPENDIDO', '#dc2626')">
+                                Suspender seleccionados
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="items-table-wrap">
+                        <table class="detail-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px;" class="text-center">
+                                        <input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)" />
+                                    </th>
+                                    <th>Antibiótico</th>
+                                    <th>Tipo</th>
+                                    <th>Indicación</th>
+                                    <th>Dosis / Frecuencia</th>
+                                    <th>Vía Admin.</th>
+                                    <th>Duración</th>
+                                    <th>Vigencia</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each solicitud.items}}
+                                <tr>
+                                    <td class="text-center">
+                                        {{#if (eq this.state 'FINALIZADO')}}
+                                        <!-- Checkbox deshabilitado con data-state para fácil identificación -->
+                                        <input type="checkbox" disabled data-state="FINALIZADO" title="Este medicamento ya ha finalizado y no se puede modificar" />
+                                        {{else}}
+                                        <input type="checkbox" class="item-checkbox" value="{{this.id}}" data-state="{{this.state}}" />
+                                        {{/if}}
+                                    </td>
+                                    <td><strong>{{this.antibiotico.nombre}}</strong></td>
+                                    <td>
+                                        <span class="badge-tipo">
+                                            {{#if this.antibiotico.tipo}}{{this.antibiotico.tipo}}{{else}}-{{/if}}
+                                        </span>
+                                    </td>
+                                    <td><span class="badge-indicacion">{{this.indicacion}}</span></td>
+                                    <td><strong>{{this.dosis}}</strong> <span class="text-muted">/ {{this.frecuencia}}</span></td>
+                                    <td>{{this.viaAdministracion}}</td>
+                                    <td><strong>{{this.duracion}}</strong> días</td>
+                                    <td>
+                                        <small class="date-cell">
+                                            {{formatOnlyDate this.fechaInicio}} - {{formatOnlyDate this.fechaFin}}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {{#if (eq this.state 'FINALIZADO')}}
+                                        <span class="status-badge status-finalizado">FINALIZADO</span>
+                                        {{else if (eq this.state 'SUSPENDIDO')}}
+                                        <span class="status-badge status-rechazado">SUSPENDIDO</span>
+                                        {{else}}
+                                        <span class="status-badge status-aprobado">APROBADO</span>
+                                        {{/if}}
+                                    </td>
+                                </tr>
+                                {{else}}
+                                <tr>
+                                    <td colspan="9" class="text-muted text-center" style="padding: 16px;">
+                                        No se registraron ítems en esta solicitud.
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- BARRA LATERAL -->
+            <div class="detail-sidebar">
+                <section class="detail-card">
+                    <h3 class="sidebar-title">Médicos Participantes</h3>
+                    <div class="doctor-info">
+                        <div class="doctor-icon">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="8.5" cy="7" r="4"></circle>
+                                <line x1="20" y1="8" x2="20" y2="14"></line>
+                                <line x1="23" y1="11" x2="17" y2="11"></line>
+                            </svg>
+                        </div>
+                        <div>
+                            <label>Médico que Prescribe</label>
+                            <p><strong>{{solicitud.medicoPrescribe}}</strong></p>
+                        </div>
+                    </div>
+                    <hr class="divider">
+                    <div class="doctor-info">
+                        <div class="doctor-icon">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <label>Médico que Redacta</label>
+                            <p><strong>{{solicitud.medicoRedacta}}</strong></p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // Seleccionar o deseleccionar solo los checkboxes permitidos (no deshabilitados)
+    function toggleSelectAll(masterCheckbox) {
+        const checkboxes = document.querySelectorAll('.item-checkbox:not(:disabled)');
+        checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+    }
+
+    // Procesar dictamen en lote
+    async function dictaminarSeleccionados(nuevoEstado, colorBoton) {
+        // Filtra únicamente elementos marcados que NO estén deshabilitados ni en estado FINALIZADO
+        const seleccionadosNodes = Array.from(document.querySelectorAll('.item-checkbox:checked:not(:disabled)'))
+            .filter(cb => cb.getAttribute('data-state') !== 'FINALIZADO');
+
+        const seleccionados = seleccionadosNodes.map(cb => Number(cb.value));
+
+        if (seleccionados.length === 0) {
+            Swal.fire(
+                'Atención', 
+                'Seleccione al menos un medicamento activo o suspendido. Los ítems en estado "FINALIZADO" no se pueden modificar.', 
+                'info'
+            );
+            return;
+        }
+
+        const accionTexto = nuevoEstado === 'APROBADO' ? 'Aprobar' : 'Suspender';
+
+        const { value: observacion, isConfirmed } = await Swal.fire({
+            title: `${accionTexto} ${seleccionados.length} medicamento(s)`,
+            input: 'textarea',
+            inputLabel: 'Observación de Auditoría PROA (Revisión)',
+            inputPlaceholder: 'Escriba las justificaciones o notas de la decisión...',
+            showCancelButton: true,
+            confirmButtonColor: colorBoton,
+            confirmButtonText: `Confirmar (${accionTexto})`,
+            cancelButtonText: 'Cancelar',
+            inputValidator: (value) => {
+                if (nuevoEstado === 'SUSPENDIDO' && !value.trim()) {
+                    return 'Debe ingresar una observación para suspender los medicamentos seleccionados.';
+                }
+            }
+        });
+
+        if (!isConfirmed) return;
+
+        try {
+            const solicitudId = '{{solicitud.id}}';
+            const res = await fetch(`/solicitudes/${solicitudId}/items/estado`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    itemsIds: seleccionados,
+                    estado: nuevoEstado,
+                    observacion: observacion || ''
+                })
+            });
+
+            if (res.ok) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Medicamentos y revisión actualizados',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                window.location.reload();
+            } else {
+                const errorData = await res.json();
+                Swal.fire('Error', errorData.message || 'No se pudieron actualizar los medicamentos', 'error');
+            }
+        } catch (error) {
+            Swal.fire('Error', 'Ocurrió un error en la conexión con el servidor', 'error');
+        }
+    }
+</script>

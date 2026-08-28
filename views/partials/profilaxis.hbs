@@ -1,0 +1,45 @@
+<section class="form-section profilaxis-section" id="profilaxisSection" hidden>
+
+    <div class="section-header">
+        <div>
+            <h2>Condiciones de profilaxis</h2>
+            <p>Estas condiciones determinan la duración permitida del tratamiento.</p>
+        </div>
+    </div>
+
+
+    <div class="conditional-card">
+
+        <div class="form-group">
+            <label for="cirugiaOrtopedia">
+                Cirugía de ortopedia
+                <span class="req">*</span>
+            </label>
+
+            <select id="cirugiaOrtopedia" class="form-control" name="cirugiaOrtopedia" data-label="Cirugía de ortopedia">
+                <option value="">Seleccione</option>
+                <option value="SI">Sí</option>
+                <option value="NO">No</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="gustilloContainer" hidden>
+
+            <label for="gustilloAnderson">
+                Gustillo y Anderson III
+                <span class="req">*</span>
+            </label>
+
+            <select id="gustilloAnderson" class="form-control"name="gustilloAnderson"data-label="Gustillo y Anderson III">
+                <option value="">Seleccione</option>
+                <option value="SI">Sí</option>
+                <option value="NO">No</option>
+            </select>
+        </div>
+
+        <div class="profilaxis-rule" id="profilaxisRule" hidden>
+            <strong>Duración permitida:</strong>
+            <span id="profilaxisRuleText"></span>
+        </div>
+    </div>
+</section>

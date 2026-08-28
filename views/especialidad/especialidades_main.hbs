@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Especialidades Tratantes - PROA</title>
+    <link rel="stylesheet" href="especialidad/css/especialidad.styles.css"> 
+</head>
+
+<body>
+    <div class="admin-page">
+        {{> admin_nav}}
+
+        <main class="admin-container">
+            <header class="admin-header">
+                <h1>Especialidades Tratantes</h1>
+                <p>Gestión de las especialidades médicas tratantes registradas en el sistema.</p>
+            </header>
+
+            <!-- BARRA DE ACCIONES Y BUSCADOR -->
+            <div class="especialidades-toolbar">
+                <div class="especialidades-search-box">
+                    <input type="text" id="searchEspecialidad" class="admin-control"
+                        placeholder="Buscar por nombre de especialidad..." onkeyup="filtrarEspecialidades()">
+                </div>
+                <button type="button" class="btn-action btn-primary" onclick="abrirModalCrear()">
+                    + Agregar Especialidad
+                </button>
+            </div>
+
+            <!-- TABLA DE ESPECIALIDADES -->
+            <div class="admin-table-wrap">
+                <table class="admin-table" id="tablaEspecialidades">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre de la Especialidad</th>
+                            <th>Fecha Creación</th>
+                            <th>Estado</th>
+                            <th style="text-align: right;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each especialidades}}
+                        <tr>
+                            <td data-label="ID" class="text-muted text-sm">{{this.id}}</td>
+                            <td data-label="Nombre" class="text-main" style="font-weight: 600;">{{this.nombre}}</td>
+                            <td data-label="Fecha Creación" class="text-muted text-sm">
+                                {{formatDate this.created_at}}
+                            </td>
+                            <td data-label="Estado">
+                                {{#if this.activo}}
+                                <span class="status-pill status-aprobado">Activa</span>
+                                {{else}}
+                                <span class="status-pill status-rechazado">Inactiva</span>
+                                {{/if}}
+                            </td>
+                            <td data-label="Acciones" style="text-align: right;">
+                                <button type="button" class="btn-action"
+                                    onclick="abrirModalEditar({{this.id}}, '{{this.nombre}}', {{this.activo}})">
+                                    Editar
+                                </button>
+                                <button type="button" class="btn-logout" onclick="eliminarEspecialidad({{this.id}})"
+                                    style="display: inline-block;">
+                                    Eliminar
+                                </button>
+                            </td>
+                        </tr>
+                        {{else}}
+                        <tr>
+                            <td colspan="5" class="table-empty">No hay especialidades tratantes registradas.</td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL ESTRUCTURADO CON OVERLAY -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="especialidad-modal-card">
+            <form id="formEspecialidad" onsubmit="guardarEspecialidad(event)">
+                <h2 id="modalTitle" class="modal-title">Agregar Especialidad</h2>
+                <input type="hidden" id="especialidadId">
+
+                <div class="form-group">
+                    <label for="especialidadNombre">Nombre de la Especialidad</label>
+                    <input type="text" id="especialidadNombre" class="admin-control" maxlength="100"
+                        placeholder="Ej: Infectología" required>
+                </div>
+
+                <div class="form-checkbox-group">
+                    <input type="checkbox" id="especialidadActivo" checked>
+                    <label for="especialidadActivo"
+                        style="font-size: 0.85rem; color: var(--adm-text-main, #0f172a);">Especialidad Activa</label>
+                </div>
+
+                <div id="modalError" class="modal-error" hidden></div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+                    <button type="submit" class="btn-save-modal">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const overlay = document.getElementById('modalOverlay');
+        const modalError = document.getElementById('modalError');
+
+        function mostrarErrorModal(mensaje) {
+            modalError.textContent = mensaje;
+            modalError.hidden = false;
+        }
+
+        function limpiarErrorModal() {
+            modalError.hidden = true;
+            modalError.textContent = '';
+        }
+
+        function abrirModalCrear() {
+            limpiarErrorModal();
+            document.getElementById('modalTitle').innerText = 'Agregar Especialidad';
+            document.getElementById('especialidadId').value = '';
+            document.getElementById('especialidadNombre').value = '';
+            document.getElementById('especialidadActivo').checked = true;
+            overlay.classList.add('active');
+        }
+
+        function abrirModalEditar(id, nombre, activo) {
+            limpiarErrorModal();
+            document.getElementById('modalTitle').innerText = 'Editar Especialidad';
+            document.getElementById('especialidadId').value = id;
+            document.getElementById('especialidadNombre').value = nombre;
+            document.getElementById('especialidadActivo').checked = Boolean(activo);
+            overlay.classList.add('active');
+        }
+
+        function cerrarModal() {
+            overlay.classList.remove('active');
+        }
+
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) cerrarModal();
+        });
+
+        async function guardarEspecialidad(event) {
+            event.preventDefault();
+            limpiarErrorModal();
+
+            const id = document.getElementById('especialidadId').value;
+            const payload = {
+                nombre: document.getElementById('especialidadNombre').value,
+                activo: document.getElementById('especialidadActivo').checked
+            };
+
+            // Antes apuntaba a /especialidades-tratantes, que no coincide con
+            // el @Controller('especialidades') del backend.
+            const url = id ? `/especialidades/${id}` : '/especialidades';
+            const method = id ? 'PATCH' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    window.location.reload();
+                    return;
+                }
+
+                const data = await res.json().catch(() => null);
+                mostrarErrorModal(data?.message || 'No fue posible guardar la especialidad.');
+            } catch (e) {
+                console.error('Error al procesar la especialidad:', e);
+                mostrarErrorModal('Error de conexión con el servidor.');
+            }
+        }
+
+        async function eliminarEspecialidad(id) {
+            if (!confirm('¿Deseas eliminar esta especialidad tratante?')) return;
+
+            try {
+                const res = await fetch(`/especialidades/${id}`, { method: 'DELETE' });
+
+                if (res.ok) {
+                    window.location.reload();
+                    return;
+                }
+
+                const data = await res.json().catch(() => null);
+                alert(data?.message || 'No fue posible eliminar la especialidad.');
+            } catch (e) {
+                console.error('Error al eliminar la especialidad:', e);
+                alert('Error de conexión con el servidor.');
+            }
+        }
+
+        function filtrarEspecialidades() {
+            const query = document.getElementById('searchEspecialidad').value.toLowerCase();
+            const rows = document.querySelectorAll('#tablaEspecialidades tbody tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+
+</html>
