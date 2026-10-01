@@ -1,134 +1,208 @@
-<title>Programa PROA - Control de Solicitudes</title>
-<link rel="stylesheet" href="css/solicitudes.css">
+<title>Programa PROA - Consulta de Solicitudes</title>
+<link rel="stylesheet" href="/admin/css/admin.styles.css">
+<style>
+  /* La cabecera se repite antes de cada paciente para separarlos.
+     En pantallas pequenas la tabla ya se convierte en fichas y la
+     cabecera estorba, asi que ahi solo queda la franja gris. */
+  @media (max-width: 768px) {
+    .admin-table tbody tr.repeticion-cabecera { display: none; }
+  }
+</style>
 
 <div class="admin-page">
-  <main class="admin-container">
-    <header class="detail-header">
-      <div class="header-left">
-        <h1 class="detail-title">Listado de Medicamentos por Solicitud</h1>
-        <p class="text-muted text-sm">Monitoreo y despacho de antibióticos por paciente.</p>
-      </div>
 
-      <!-- Barra de Búsqueda -->
-      <div class="search-box">
-        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-        <input type="text" id="searchInput" placeholder="Buscar paciente, documento o estado..."
-          onkeyup="filterRequests()">
+  <main class="admin-container">
+
+    <header class="admin-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <div>
+        <h1>Consulta de Solicitudes</h1>
+        <p>Todas las solicitudes registradas. Puede filtrar por cédula o por nombre del paciente.</p>
+      </div>
+      <div>
+        <a href="/form" class="btn-action btn-primary"
+          style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; padding: 0.6rem 1rem;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Nueva solicitud
+        </a>
       </div>
     </header>
 
-    <!-- Contenedor principal de tarjetas -->
-    <div class="requests-feed" id="requestsFeed">
-      {{#each solicitudes}}
-      <div class="request-card">
-        <!-- Tabla Superior: Datos Generales de la Solicitud -->
-        <table class="main-requests-table">
-          <thead>
-            <tr>
-              <th class="text-center">Fecha solicitud</th>
-              <th class="text-center">Paciente</th>
-              <th class="text-center">Documento</th>
-              <th class="text-center">Estado</th>
-              <th class="text-center">Total Meds</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="request-row">
-              <td class="text-center"><span class="request-date">{{formatDate this.submittedAt}}</span></td>
-              <td class="text-center">
-                <strong class="patient-name">
-                  {{#if this.evaluacion.pacienteNombre}}
-                  {{this.evaluacion.pacienteNombre}}
-                  {{else}}
-                  <span class="text-muted">Sin registrar</span>
-                  {{/if}}
-                </strong>
-              </td>
-              <td class="text-center">
-                <span class="patient-doc">
-                  {{#if this.evaluacion.pacienteDocumento}}
-                  {{this.evaluacion.pacienteDocumento}}
-                  {{else}}
-                  <span class="text-muted">Sin registrar</span>
-                  {{/if}}
-                </span>
-              </td>
-              <td class="text-center">
-                <span class="status-badge status-{{statusClass this.status}}">
-                  {{this.status}}
-                </span>
-              </td>
-              <td class="text-center">
-                <span class="badge-count">{{this.items.length}}</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <!-- Subtabla Inferior: Medicamentos -->
-        <div class="dropdown-content">
-          <table class="detail-table inner-table">
-            <thead>
-              <tr>
-                <th>Antibiótico</th>
-                <th>Tipo</th>
-                <th>Indicación</th>
-                <th>Dosis / Frecuencia</th>
-                <th>Vía</th>
-                <th>Duración</th>
-                <th>Inicio / Fin</th>
-              </tr>
-            </thead>
-            <tbody>
-              {{#each this.items}}
-              <tr>
-                <td><strong>{{this.antibiotico.nombre}}</strong></td>
-                <td>
-                  <span class="badge-tipo">
-                    {{#if this.antibiotico.tipo}}{{this.antibiotico.tipo}}{{else}}-{{/if}}
-                  </span>
-                </td>
-                <td><span class="badge-indicacion">{{this.indicacion}}</span></td>
-                <td><strong>{{this.dosis}}</strong> <span class="text-muted">/ {{this.frecuencia}}</span></td>
-                <td>{{this.viaAdministracion}}</td>
-                <td><strong>{{this.duracion}}</strong> días</td>
-                <td>
-                  <small class="date-cell">
-                    {{formatOnlyDate this.fechaInicio}} - {{formatOnlyDate this.fechaFin}}
-                  </small>
-                </td>
-              </tr>
-              {{else}}
-              <tr>
-                <td colspan="7" class="text-muted text-center">No hay medicamentos asociados a esta solicitud.</td>
-              </tr>
-              {{/each}}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      {{else}}
-      <div class="empty-state">
-        <p class="text-center text-muted p-4">No hay solicitudes registradas en el sistema.</p>
-      </div>
-      {{/each}}
+    {{#if recienCreada}}
+    <div style="border-left: 3px solid #16a34a; background: #f0fdf4; padding: 0.85rem 1rem; margin-bottom: 1rem;">
+      <strong style="color: #166534;">Solicitud registrada correctamente.</strong>
+      <span class="text-muted text-sm">
+        Quedó a nombre del documento <strong>{{documentoActual}}</strong> y aparece de primera en la lista.
+      </span>
     </div>
+    {{/if}}
+
+    <form class="admin-filters" method="GET" action="/solicitudes">
+      <div class="filter-group filter-search">
+        <input type="text" id="documento" name="documento" class="admin-control" value="{{documentoActual}}"
+          placeholder="Buscar por cédula o nombre del paciente..." autocomplete="off" autofocus>
+      </div>
+      <div class="filter-group">
+        <button type="submit" class="btn-action btn-primary"
+          style="padding: 0.6rem 1.2rem; cursor: pointer;">Buscar</button>
+      </div>
+      {{#if hayFiltro}}
+      <div class="filter-group">
+        <a href="/solicitudes" class="btn-action"
+          style="display: inline-block; padding: 0.6rem 1.2rem; text-decoration: none;">Ver todas</a>
+      </div>
+      {{/if}}
+    </form>
+
+    {{#unless sinResultados}}
+    <p class="text-muted text-sm" style="margin-bottom: 0.75rem;">
+      {{#if hayFiltro}}
+      {{total}} solicitud(es) que coinciden con <strong>{{documentoActual}}</strong>.
+      {{else}}
+      {{total}} solicitud(es) registradas.
+      {{/if}}
+    </p>
+    {{/unless}}
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID / Fecha</th>
+            <th>Paciente</th>
+            <th>Identificación</th>
+            <th>Ubicación</th>
+            <th>Diagnóstico</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each solicitudes}}
+          {{#unless @first}}
+          <tr aria-hidden="true">
+            <td colspan="5" style="padding: 0; border: none; height: 16px; background: #eef2f7;"></td>
+          </tr>
+          <tr class="repeticion-cabecera">
+            <th>ID / Fecha</th>
+            <th>Paciente</th>
+            <th>Identificación</th>
+            <th>Ubicación</th>
+            <th>Diagnóstico</th>
+          </tr>
+          {{/unless}}
+          <tr>
+            <td data-label="Fecha" style="border-left: 3px solid #0284c7; border-bottom: none;">
+              <div class="text-muted text-sm">
+                {{formatDate this.submittedAt}}
+              </div>
+            </td>
+            <td data-label="Paciente" style="border-bottom: none;">
+              <strong class="text-muted text-sm">{{this.evaluacion.pacienteNombre}}</strong>
+            </td>
+            <td data-label="Identificación" style="border-bottom: none;">
+              <span class="text-muted text-sm">{{this.evaluacion.pacienteDocumento}}</span>
+            </td>
+            <td data-label="Ubicación" style="border-bottom: none;">
+              <div>{{this.sede.nombre}}-</div>
+              <div class="text-muted text-sm">{{this.servicio}}</div>
+            </td>
+            <td data-label="Diagnóstico" style="border-bottom: none;">
+              <span>{{this.evaluacion.diagnosticoPrincipal}}</span>
+            </td>
+          </tr>
+
+          <!-- Detalle en la misma fila: evaluación y antibióticos prescritos -->
+          <tr>
+            <td colspan="5" style="padding: 0 0 1rem 0;">
+              <div style="border-left: 3px solid #0284c7; padding: 0.75rem 1rem; background: #f8fafc;">
+
+                <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 0.75rem;">
+                  <div>
+                    <div class="text-muted text-xs">Cama</div>
+                    <div class="text-sm">{{this.habitacion}}</div>
+                  </div>
+                  <div>
+                    <div class="text-muted text-xs">Especialidad</div>
+                    <div class="text-sm">{{this.especialidad}}</div>
+                  </div>
+                  <div>
+                    <div class="text-muted text-xs">Diagnóstico relacionado</div>
+                    <div class="text-sm">{{this.evaluacion.diagnosticoRelacionado}}</div>
+                  </div>
+                  <div>
+                    <div class="text-muted text-xs">Médico que prescribe</div>
+                    <div class="text-sm">{{this.medicoPrescribe}}</div>
+                  </div>
+                  <div>
+                    <div class="text-muted text-xs">Indicación</div>
+                    <div class="text-sm">{{#if this.evaluacion.pacienteInfectado}}Paciente infectado{{else}}Sin infección confirmada{{/if}}{{#if this.evaluacion.ajustadoGuiaProa}} · Ajustado a guía PROA{{/if}}</div>
+                  </div>
+                </div>
+
+                <div class="text-muted text-xs" style="margin-bottom: 0.35rem;">Antibióticos prescritos</div>
+                <table class="admin-table" style="margin: 0;">
+                  <thead>
+                    <tr>
+                      <th>Antibiótico</th>
+                      <th>Tipo</th>
+                      <th>Dosis / Frecuencia</th>
+                      <th>Vía</th>
+                      <th>Duración</th>
+                      <th>Vigencia</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{#each this.items}}
+                    <tr>
+                      <td data-label="Antibiótico"><strong>{{this.antibiotico.nombre}}</strong></td>
+                      <td data-label="Tipo"><span class="text-muted text-sm">{{this.antibiotico.tipo}}</span></td>
+                      <td data-label="Dosis"><strong>{{this.dosis}}</strong> <span class="text-muted text-sm">/ {{this.frecuencia}}</span></td>
+                      <td data-label="Vía">{{this.viaAdministracion}}</td>
+                      <td data-label="Duración">{{this.duracion}} día(s)</td>
+                      <td data-label="Vigencia">
+                        <span class="text-muted text-sm">{{formatOnlyDate this.fechaInicio}} - {{formatOnlyDate this.fechaFin}}</span>
+                      </td>
+                      <td data-label="Estado">
+                        {{#if (eq this.state 'PENDIENTE')}}
+                        <span class="status-pill status-pendiente">PENDIENTE</span>
+                        {{else if (eq this.state 'SUSPENDIDO')}}
+                        <span class="status-pill status-suspendido">SUSPENDIDO</span>
+                        {{else if (eq this.state 'FINALIZADO')}}
+                        <span class="status-pill status-finalizado">FINALIZADO</span>
+                        {{else}}
+                        <span class="status-pill status-aprobado">APROBADO</span>
+                        {{/if}}
+                      </td>
+                    </tr>
+                    {{else}}
+                    <tr>
+                      <td colspan="7" class="table-empty">Sin antibióticos registrados.</td>
+                    </tr>
+                    {{/each}}
+                  </tbody>
+                </table>
+
+              </div>
+            </td>
+          </tr>
+          {{else}}
+          <tr>
+            <td colspan="5" class="table-empty">
+              {{#if hayFiltro}}
+              No se encontraron solicitudes para <strong>{{documentoActual}}</strong>.
+              Verifique la cédula o el nombre e intente de nuevo.
+              {{else}}
+              Todavía no hay solicitudes registradas.
+              {{/if}}
+            </td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+
   </main>
 </div>
-
-<script>
-  function filterRequests() {
-    const input = document.getElementById('searchInput');
-    const filter = input.value.toLowerCase();
-    const cards = document.querySelectorAll('#requestsFeed .request-card');
-
-    cards.forEach(card => {
-      const text = card.textContent.toLowerCase();
-      card.style.display = text.includes(filter) ? '' : 'none';
-    });
-  }
-</script>

@@ -39,7 +39,7 @@
         <button type="submit" class="btn-action btn-primary">Filtrar</button>
       </form>
 
-      <div class="admin-table-wrap">
+      <div class="admin-table-wrap" style="overflow-x: auto;">
         <table class="admin-table">
           <thead>
             <tr>
@@ -49,13 +49,14 @@
               <th>Estado</th>
               <th>Revisado por</th>
               <th>Observación</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {{#each revisiones}}
             <tr>
               <td data-label="Fecha" class="text-muted text-sm">{{formatDateTime this.createdAt}}</td>
-              <td data-label="Solicitud">
+              <td data-label="Solicitud" style="word-break: break-all;">
                 <a  class="text-muted text-sm">#{{this.solicitudId}}</a>
               </td>
               <td data-label="Paciente" class="text-main">{{this.solicitud.evaluacion.pacienteNombre}}</td>
@@ -66,13 +67,23 @@
               <td data-label="Observación" class="text-sm">
                 {{#if this.observacion}}{{this.observacion}}{{else}}<span class="text-muted">—</span>{{/if}}
               </td>
-              <td data-label="Solicitud">
+              <td data-label="Acciones" style="white-space: nowrap;">
                 <a href="/revisiones/{{this.id}}" class="btn-action">Ver mas...</a>
+                {{!-- Levantar una suspension equivocada. Se emite un dictamen nuevo
+                      sobre los mismos items y el historial conserva ambos registros. --}}
+                {{#if (eq this.estado 'SUSPENDIDO')}}
+                <button type="button" class="btn-action btn-primary"
+                  style="margin-left: 0.35rem; cursor: pointer;"
+                  title="Levantar la suspensión de estos antibióticos"
+                  data-solicitud="{{this.solicitudId}}"
+                  data-items="{{#each this.itemsIds}}{{this}},{{/each}}"
+                  onclick="levantarSuspension(this)">Corregir</button>
+                {{/if}}
               </td>
             </tr>
             {{else}}
             <tr>
-              <td colspan="6" class="table-empty">No hay revisiones registradas con este filtro.</td>
+              <td colspan="7" class="table-empty">No hay revisiones registradas con este filtro.</td>
             </tr>
             {{/each}}
           </tbody>
@@ -95,6 +106,66 @@
 
     </main>
   </div>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    /**
+     * Levanta la suspensión de los antibióticos de ESTA revisión.
+     * Emite un dictamen nuevo (APROBADO) sobre los mismos ítems: la
+     * revisión original no se borra, queda el historial completo.
+     */
+    async function levantarSuspension(boton) {
+      const solicitudId = boton.dataset.solicitud;
+      const items = (boton.dataset.items || '').split(',').map(v => v.trim()).filter(Boolean);
+
+      if (!solicitudId || items.length === 0) {
+        Swal.fire('Atención', 'Esta revisión no tiene antibióticos asociados.', 'info');
+        return;
+      }
+
+      const { value: observacion, isConfirmed } = await Swal.fire({
+        title: `Levantar la suspensión de ${items.length} medicamento(s)`,
+        input: 'textarea',
+        inputLabel: 'Motivo de la corrección',
+        inputPlaceholder: 'Explique por qué se levanta la suspensión...',
+        showCancelButton: true,
+        confirmButtonColor: '#16a34a',
+        confirmButtonText: 'Confirmar',
+        cancelButtonText: 'Cancelar',
+        inputValidator: (value) => {
+          if (!value || !value.trim()) {
+            return 'Debe ingresar el motivo por el cual se levanta la suspensión.';
+          }
+        }
+      });
+
+      if (!isConfirmed) return;
+
+      try {
+        const res = await fetch(`/solicitudes/${solicitudId}/items/estado`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ itemsIds: items, estado: 'APROBADO', observacion })
+        });
+
+        if (res.ok) {
+          await Swal.fire({
+            icon: 'success',
+            title: 'Suspensión levantada',
+            timer: 1500,
+            showConfirmButton: false
+          });
+          window.location.href = '/revisiones';
+        } else {
+          const error = await res.json();
+          Swal.fire('Error', error.message || 'No se pudo levantar la suspensión', 'error');
+        }
+      } catch (e) {
+        Swal.fire('Error', 'Ocurrió un error en la conexión con el servidor', 'error');
+      }
+    }
+  </script>
 
 </body>
 

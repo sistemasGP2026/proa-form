@@ -1,94 +1,128 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
 import { Antibiotico } from './entities/antibioticos.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { TipoAntibiotico } from './entities/tipoAntibiotico.enum';
 import { CreateAntibiotico, UpdateAntibiotico } from './dto/antibiotico.dto';
+import { toObjectId, toPlain } from 'src/utils/mongo.util';
 
 @Injectable()
 export class AntibioticoService {
-  constructor(@InjectRepository(Antibiotico) private readonly antibioticoRepository: Repository<Antibiotico>) { }
+  constructor(
+    @InjectModel(Antibiotico.name) private readonly antibioticoModel: Model<Antibiotico>,
+  ) {}
 
-  async getAntibioticosRestringidos(): Promise<Antibiotico[]> {
-    return await this.antibioticoRepository.find({
-      where: { tipo: TipoAntibiotico.RESTRINGIDO, activo: true }
-    })
+  async getAntibioticosRestringidos(): Promise<any[]> {
+    const antibioticos = await this.antibioticoModel
+      .find({ tipo: TipoAntibiotico.RESTRINGIDO, activo: true })
+      .sort({ nombre: 1 })
+      .lean()
+      .exec();
+    return toPlain(antibioticos);
   }
 
-  async getAntibioticosVigilado(): Promise<Antibiotico[]> {
-    return await this.antibioticoRepository.find({
-      where: { tipo: TipoAntibiotico.VIGILADO, activo: true }
-    })
+  async getAntibioticosVigilado(): Promise<any[]> {
+    const antibioticos = await this.antibioticoModel
+      .find({ tipo: TipoAntibiotico.VIGILADO, activo: true })
+      .sort({ nombre: 1 })
+      .lean()
+      .exec();
+    return toPlain(antibioticos);
   }
 
-  async getAllActive(): Promise<Antibiotico[]> {
-    return this.antibioticoRepository.find({ where: { activo: true } });
+  async getAllActive(): Promise<any[]> {
+    const antibioticos = await this.antibioticoModel
+      .find({ activo: true })
+      .sort({ nombre: 1 })
+      .lean()
+      .exec();
+    return toPlain(antibioticos);
   }
 
-  async getById(id: number): Promise<Antibiotico | null> {
-    return this.antibioticoRepository.findOne({ where: { id } });
+  async getById(id: string): Promise<any | null> {
+    const antibiotico = await this.antibioticoModel
+      .findById(toObjectId(id, 'antibiotico'))
+      .lean()
+      .exec();
+    return antibiotico ? toPlain(antibiotico) : null;
   }
 
-  async create(data: CreateAntibiotico): Promise<Antibiotico> {
-    const existeCodigo = await this.antibioticoRepository.findOne({ where: { codigo: data.codigo } });
+  /** Usado por SolicitudesService: solo devuelve antibióticos habilitados. */
+  async getAntibioticoById(id: string | Types.ObjectId): Promise<any | null> {
+    const antibiotico = await this.antibioticoModel
+      .findOne({ _id: toObjectId(id, 'antibiotico'), activo: true })
+      .lean()
+      .exec();
+    return antibiotico ? toPlain(antibiotico) : null;
+  }
+
+  async create(data: CreateAntibiotico): Promise<any> {
+    const existeCodigo = await this.antibioticoModel.exists({ codigo: data.codigo });
     if (existeCodigo) {
       throw new BadRequestException(`El código "${data.codigo}" ya está en uso`);
     }
 
-    const existeNombre = await this.antibioticoRepository.findOne({ where: { nombre: data.nombre } });
+    const existeNombre = await this.antibioticoModel.exists({ nombre: data.nombre });
     if (existeNombre) {
       throw new BadRequestException(`El antibiótico "${data.nombre}" ya existe`);
     }
 
-    const nuevo = this.antibioticoRepository.create({
+    const nuevo = await this.antibioticoModel.create({
       codigo: data.codigo,
       nombre: data.nombre,
       tipo: data.tipo,
       activo: data.activo ?? true,
     });
 
-    return this.antibioticoRepository.save(nuevo);
+    return toPlain(nuevo.toObject());
   }
 
-  async delete(id: number): Promise<boolean> {
-    const antibiotico = await this.antibioticoRepository.findOne({ where: { id } });
-    if (!antibiotico) {
+  async delete(id: string): Promise<boolean> {
+    const actualizado = await this.antibioticoModel
+      .findByIdAndUpdate(toObjectId(id, 'antibiotico'), { $set: { activo: false } })
+      .lean()
+      .exec();
+
+    if (!actualizado) {
       throw new BadRequestException(`Antibiótico con id ${id} no existe o ya fue eliminado`);
     }
 
-    antibiotico.activo = false;
-    await this.antibioticoRepository.save(antibiotico);
-
     return true;
   }
-  async update(id: number, data: UpdateAntibiotico): Promise<Antibiotico> {
-    const antibiotico = await this.antibioticoRepository.findOne({ where: { id } });
+
+  async update(id: string, data: UpdateAntibiotico): Promise<any> {
+    const _id = toObjectId(id, 'antibiotico');
+
+    const antibiotico = await this.antibioticoModel.findById(_id).lean().exec();
     if (!antibiotico) {
       throw new BadRequestException(`Antibiótico con id ${id} no existe o ya fue eliminado`);
     }
 
     if (data.codigo) {
-      const existeCodigo = await this.antibioticoRepository.findOne({ where: { codigo: data.codigo } });
-      if (existeCodigo && existeCodigo.id !== id) {
+      const existeCodigo = await this.antibioticoModel
+        .findOne({ codigo: data.codigo, _id: { $ne: _id } })
+        .lean()
+        .exec();
+      if (existeCodigo) {
         throw new BadRequestException(`Ya existe un antibiótico con el código "${data.codigo}"`);
       }
     }
 
     if (data.nombre) {
-      const existeNombre = await this.antibioticoRepository.findOne({ where: { nombre: data.nombre } });
-      if (existeNombre && existeNombre.id !== id) {
+      const existeNombre = await this.antibioticoModel
+        .findOne({ nombre: data.nombre, _id: { $ne: _id } })
+        .lean()
+        .exec();
+      if (existeNombre) {
         throw new BadRequestException(`Ya existe un antibiótico con el nombre "${data.nombre}"`);
       }
     }
 
-    Object.assign(antibiotico, data);
-    return this.antibioticoRepository.save(antibiotico);
-  }
+    const actualizado = await this.antibioticoModel
+      .findByIdAndUpdate(_id, { $set: { ...data } }, { new: true })
+      .lean()
+      .exec();
 
-  async getAntibioticoById(id: number): Promise<Antibiotico | null> {
-    return await this.antibioticoRepository.findOne({
-      where: { id, activo: true }
-    })
+    return toPlain(actualizado);
   }
-
 }

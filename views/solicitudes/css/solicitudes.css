@@ -209,6 +209,8 @@ body {
 .status-aprobado  { background-color: #dcfce7; color: #15803d; }
 .status-rechazado { background-color: #fee2e2; color: #b91c1c; }
 .status-observado { background-color: #e0f2fe; color: #0369a1; }
+.status-suspendido { background-color: #fee2e2; color: #b91c1c; }
+.status-finalizado { background-color: #f1f5f9; color: #475569; }
 
 .badge-indicacion {
   background-color: #eff6ff;

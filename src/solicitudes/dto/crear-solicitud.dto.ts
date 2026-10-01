@@ -1,13 +1,26 @@
 import { Type } from 'class-transformer';
-import { IsString, IsNotEmpty, IsIn, IsNumberString, IsArray, ValidateNested, IsOptional, ArrayMinSize, IsInt, isBoolean, IsBoolean, ValidateIf, IsNumber, } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsIn,
+  IsNumberString,
+  IsArray,
+  ValidateNested,
+  IsOptional,
+  ArrayMinSize,
+  IsInt,
+  IsBoolean,
+  ValidateIf,
+  IsNumber,
+  IsMongoId,
+} from 'class-validator';
 import { ProfilaxisDto } from './profilaxis.dto';
 
 class MedicamentoDto {
-  @Type(() => Number)
-  @IsInt()
-  antibioticoId!: number;
+  @IsMongoId({ message: 'El antibiótico seleccionado no es válido' })
+  antibioticoId!: string;
 
-  @Type(()=> Number) cantidad!: number;
+  @Type(() => Number) cantidad!: number;
 
   @Type(() => Number)
   @IsNumber()
@@ -21,6 +34,13 @@ class MedicamentoDto {
 
   @IsOptional() @IsString()
   fechaFin?: string;
+
+  /** Texto libre cuando frecuencia === 'OTRO'. */
+  @IsOptional() @IsString()
+  frecuenciaOtro?: string;
+
+  @IsOptional() @IsString()
+  observaciones?: string;
 }
 
 export class CrearSolicitudDto {
@@ -29,9 +49,8 @@ export class CrearSolicitudDto {
   @IsString() @IsNotEmpty() diagnosticoPrincipal!: string;
   @IsString() @IsNotEmpty() diagnostico!: string;
 
-  @Type(() => Number)
-  @IsInt()
-  sede!: number;
+  @IsMongoId({ message: 'La sede seleccionada no es válida' })
+  sede!: string;
 
   @IsString() @IsNotEmpty() servicio!: string;
   @IsString() @IsNotEmpty() habitacion!: string;
@@ -44,6 +63,7 @@ export class CrearSolicitudDto {
   @IsInt()
   cantidad_antibioticos!: number;
 
+  @IsOptional()
   @ValidateNested()
   @Type(() => ProfilaxisDto)
   profilaxis?: ProfilaxisDto;
@@ -57,6 +77,7 @@ export class CrearSolicitudDto {
   @IsString() @IsNotEmpty() medicoRedacta!: string;
 
   @Type(() => Boolean) @IsBoolean() pacienteInfectado!: boolean;
+
   @Type(() => Boolean)
   @IsBoolean()
   tratamientoPrevio!: boolean;
@@ -69,10 +90,10 @@ export class CrearSolicitudDto {
   @IsBoolean()
   ajustadoGuiaProa!: boolean;
 
-  @ValidateIf(o => o.ajustadoGuiaProa)
+  @ValidateIf((o) => o.ajustadoGuiaProa)
   @IsNotEmpty()
-
   guiaIndicacion?: string;
+
   @IsOptional() @IsString() antecedentes?: string;
   @IsOptional() @IsString() creatininaReporte?: string;
   @IsOptional() @IsString() tratamientoPrevioDesc?: string;

@@ -1,19 +1,21 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument } from 'mongoose';
 
-@Entity('diagnosticos_infecciosos')
+export type DiagnosticoInfecciosoDocument = HydratedDocument<DiagnosticoInfeccioso>;
+
+@Schema({
+  collection: 'diagnosticos_infecciosos',
+  timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+})
 export class DiagnosticoInfeccioso {
-  @PrimaryGeneratedColumn()
-  id!: number;
-
-  @Column({ type: 'varchar', length: 150, unique: true })
+  @Prop({ type: String, required: true, unique: true, index: true, trim: true, maxlength: 150 })
   nombre!: string;
 
-  @Column({ type: 'bit', default: 1 })
+  @Prop({ type: Boolean, default: true, index: true })
   activo!: boolean;
 
-  @CreateDateColumn()
   created_at!: Date;
-
-  @UpdateDateColumn()
   updated_at!: Date;
 }
+
+export const DiagnosticoInfecciosoSchema = SchemaFactory.createForClass(DiagnosticoInfeccioso);

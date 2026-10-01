@@ -1,49 +1,65 @@
-import {Entity,PrimaryGeneratedColumn,Column,CreateDateColumn,UpdateDateColumn,OneToOne,OneToMany,ManyToOne,JoinColumn} from 'typeorm';
-import { SolicitudItem } from './solicitudItem.entity';
-import { Sede } from 'src/catalogos/sedes/entities/sede.entity';
-import { SolicitudEvaluacion } from './solicitudEvaluacion.entity';
-import { Revision } from 'src/revisiones/entities/revision.entity';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
+import { SolicitudItem, SolicitudItemSchema } from './solicitudItem.entity';
+import { SolicitudEvaluacion, SolicitudEvaluacionSchema } from './solicitudEvaluacion.entity';
+import { SolicitudProfilaxis, SolicitudProfilaxisSchema } from './solicitudProfilaxis.entity';
 
+export type SolicitudDocument = HydratedDocument<Solicitud>;
 
-@Entity('solicitudes')
+@Schema({
+  collection: 'solicitudes',
+  timestamps: { createdAt: 'submittedAt', updatedAt: 'updatedAt' },
+})
 export class Solicitud {
-  @PrimaryGeneratedColumn()
-  id!: number;
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Sede', required: true, index: true })
+  sedeId!: Types.ObjectId;
 
-  @Column({ type: 'int' })
-  sedeId!: number;
-
-  @ManyToOne(() => Sede)
-  @JoinColumn({ name: 'sedeId' })
-  sede!: Sede;
-
-  @Column({ type: 'varchar', length: 50 })
+  @Prop({ type: String, required: true, maxlength: 50 })
   servicio!: string;
 
-  @Column({ type: 'varchar', length: 30 })
+  @Prop({ type: String, required: true, maxlength: 30 })
   habitacion!: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Prop({ type: String, required: true, maxlength: 100 })
   especialidad!: string;
 
-  @Column({ type: 'varchar', length: 150 })
+  @Prop({ type: String, required: true, maxlength: 150 })
   medicoPrescribe!: string;
 
-  @Column({ type: 'varchar', length: 150 })
+  @Prop({ type: String, required: true, maxlength: 150 })
   medicoRedacta!: string;
 
-  @CreateDateColumn()
-  submittedAt!: Date;
-
-  @UpdateDateColumn()
-  updatedAt!: Date;
-
-  @OneToOne(() => SolicitudEvaluacion, (evaluacion) => evaluacion.solicitud, { cascade: true })
+  @Prop({ type: SolicitudEvaluacionSchema, required: true })
   evaluacion!: SolicitudEvaluacion;
 
-  @OneToMany(() => SolicitudItem, (item) => item.solicitud, { cascade: true })
+  @Prop({ type: [SolicitudItemSchema], default: [] })
   items!: SolicitudItem[];
 
-  @OneToMany(() => Revision, (revision) => revision.solicitud)
-  revisiones!: Revision[];
+  @Prop({ type: SolicitudProfilaxisSchema, default: null })
+  profilaxis!: SolicitudProfilaxis | null;
+
+  /**
+   * Anulación reversible. Una solicitud anulada desaparece de los listados
+   * y de la consulta por paciente, pero se conserva en la base junto con
+   * sus revisiones, para la trazabilidad del programa.
+   */
+  @Prop({ type: Boolean, default: false, index: true })
+  anulada!: boolean;
+
+  @Prop({ type: Date, default: null })
+  anuladaEn!: Date | null;
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Usuario', default: null })
+  anuladaPor!: Types.ObjectId | null;
+
+  @Prop({ type: String, default: null, maxlength: 500 })
+  motivoAnulacion!: string | null;
+
+  submittedAt!: Date;
+  updatedAt!: Date;
 }
+
+export const SolicitudSchema = SchemaFactory.createForClass(Solicitud);
+
+SolicitudSchema.index({ submittedAt: -1 });
+SolicitudSchema.index({ 'evaluacion.pacienteDocumento': 1 });

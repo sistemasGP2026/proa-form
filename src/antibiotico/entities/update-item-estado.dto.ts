@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString, IsArray } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsArray, IsMongoId } from 'class-validator';
 import { AntibioticoState } from './antibiotico.state';
 
 export class UpdateItemEstadoDto {
@@ -7,12 +7,12 @@ export class UpdateItemEstadoDto {
 
   @IsOptional()
   @IsString()
-  observacion!: string;
+  observacion?: string;
 }
 
 export class BulkUpdateItemEstadoDto {
   @IsArray()
-  @IsString({ each: true })
+  @IsMongoId({ each: true })
   itemIds!: string[];
 
   @IsEnum(AntibioticoState)

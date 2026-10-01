@@ -1,30 +1,28 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument } from 'mongoose';
 import { Rol } from './rol.enum';
 
+export type UsuarioDocument = HydratedDocument<Usuario>;
 
-@Entity('usuarios')
+@Schema({ collection: 'usuarios', timestamps: true })
 export class Usuario {
-  @PrimaryGeneratedColumn()
-  id!: number;
-
-  @Column({ type: 'varchar', length: 150 })
+  @Prop({ type: String, required: true, trim: true, maxlength: 150 })
   nombreCompleto!: string;
 
-  @Column({ type: 'varchar', length: 50, unique: true })
+  @Prop({ type: String, required: true, unique: true, index: true, trim: true, maxlength: 50 })
   usuario!: string;
 
-  @Column({ type: 'varchar', length: 255, select: false })
+  @Prop({ type: String, required: true, select: false })
   contraseña!: string;
 
-  @Column({ type: 'varchar', length: 30 })
+  @Prop({ type: String, required: true, enum: Object.values(Rol), index: true })
   rol!: Rol;
 
-  @Column({ type: 'bit', default: true })
+  @Prop({ type: Boolean, default: true, index: true })
   activo!: boolean;
 
-  @CreateDateColumn()
   createdAt!: Date;
-
-  @UpdateDateColumn()
   updatedAt!: Date;
 }
+
+export const UsuarioSchema = SchemaFactory.createForClass(Usuario);

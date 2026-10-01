@@ -1,64 +1,84 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { CreateDiagnostico, UpdateDiagnostico } from './dto/diagnostico.dto';
 import { DiagnosticoInfeccioso } from './entities/diagnosticos_infecciosos';
+import { toObjectId, toPlain } from 'src/utils/mongo.util';
 
 @Injectable()
 export class DiagnosticoInfecciosoService {
   constructor(
-    @InjectRepository(DiagnosticoInfeccioso)
-    private readonly diagnosticoRepository: Repository<DiagnosticoInfeccioso>,
+    @InjectModel(DiagnosticoInfeccioso.name)
+    private readonly diagnosticoModel: Model<DiagnosticoInfeccioso>,
   ) {}
 
-  async getAllActive(): Promise<DiagnosticoInfeccioso[]> {
-    return this.diagnosticoRepository.find({ where: { activo: true } });
+  async getAllActive(): Promise<any[]> {
+    const diagnosticos = await this.diagnosticoModel
+      .find({ activo: true })
+      .sort({ nombre: 1 })
+      .lean()
+      .exec();
+    return toPlain(diagnosticos);
   }
 
-  async getById(id: number): Promise<DiagnosticoInfeccioso | null> {
-    return this.diagnosticoRepository.findOne({ where: { id } });
+  async getById(id: string): Promise<any | null> {
+    const diagnostico = await this.diagnosticoModel
+      .findById(toObjectId(id, 'diagnostico'))
+      .lean()
+      .exec();
+    return diagnostico ? toPlain(diagnostico) : null;
   }
 
-  async create(data: CreateDiagnostico): Promise<DiagnosticoInfeccioso> {
-    const existente = await this.diagnosticoRepository.findOne({ where: { nombre: data.nombre } });
+  async create(data: CreateDiagnostico): Promise<any> {
+    const existente = await this.diagnosticoModel.exists({ nombre: data.nombre });
     if (existente) {
       throw new BadRequestException(`El diagnóstico "${data.nombre}" ya existe`);
     }
 
-    const nuevo = this.diagnosticoRepository.create({
+    const nuevo = await this.diagnosticoModel.create({
       nombre: data.nombre,
       activo: data.activo ?? true,
     });
 
-    return this.diagnosticoRepository.save(nuevo);
+    return toPlain(nuevo.toObject());
   }
 
-  async delete(id: number): Promise<boolean> {
-    const diagnostico = await this.diagnosticoRepository.findOne({ where: { id } });
-    if (!diagnostico) {
+  async delete(id: string): Promise<boolean> {
+    const actualizado = await this.diagnosticoModel
+      .findByIdAndUpdate(toObjectId(id, 'diagnostico'), { $set: { activo: false } })
+      .lean()
+      .exec();
+
+    if (!actualizado) {
       throw new BadRequestException(`Diagnóstico con id ${id} no existe o ya fue eliminado`);
     }
-
-    diagnostico.activo = false;
-    await this.diagnosticoRepository.save(diagnostico);
 
     return true;
   }
 
-  async update(id: number, data: UpdateDiagnostico): Promise<DiagnosticoInfeccioso> {
-    const diagnostico = await this.diagnosticoRepository.findOne({ where: { id } });
+  async update(id: string, data: UpdateDiagnostico): Promise<any> {
+    const _id = toObjectId(id, 'diagnostico');
+
+    const diagnostico = await this.diagnosticoModel.findById(_id).lean().exec();
     if (!diagnostico) {
       throw new BadRequestException(`Diagnóstico con id ${id} no existe o ya fue eliminado`);
     }
 
     if (data.nombre) {
-      const existente = await this.diagnosticoRepository.findOne({ where: { nombre: data.nombre } });
-      if (existente && existente.id !== id) {
+      const existente = await this.diagnosticoModel
+        .findOne({ nombre: data.nombre, _id: { $ne: _id } })
+        .lean()
+        .exec();
+      if (existente) {
         throw new BadRequestException(`Ya existe un diagnóstico con el nombre "${data.nombre}"`);
       }
     }
 
-    Object.assign(diagnostico, data);
-    return this.diagnosticoRepository.save(diagnostico);
+    const actualizado = await this.diagnosticoModel
+      .findByIdAndUpdate(_id, { $set: { ...data } }, { new: true })
+      .lean()
+      .exec();
+
+    return toPlain(actualizado);
   }
 }

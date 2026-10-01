@@ -5,6 +5,8 @@ import cookieParser from 'cookie-parser';
 import hbs from 'hbs';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { tieneAcceso } from './auth/permisos';
+import { ROL_ETIQUETA, Rol } from './usuarios/entities/rol.enum';
 
 hbs.registerHelper('isExpired', function (fechaFin) {
   if (!fechaFin) return false;
@@ -73,12 +75,18 @@ hbs.registerHelper('statusClass', (status: string) => {
       return 'observado';
     case 'SUSPENDIDO':
       return 'suspendido';
+    case 'FINALIZADO':
+      return 'finalizado';
     default:
       return 'desconocido';
   }
 });
 
 hbs.registerHelper('eq', (a: unknown, b: unknown) => a === b);
+hbs.registerHelper('puedeVer', (rol: unknown, modulo: unknown) => tieneAcceso(rol, modulo));
+
+hbs.registerHelper('nombreRol', (rol: unknown) => ROL_ETIQUETA[rol as Rol] ?? 'Usuario PROA');
+
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -106,7 +114,9 @@ async function bootstrap() {
   hbs.registerPartials(join(partialsPath, 'components'));
   hbs.registerPartials(join(partialsPath, 'layout'));
 
-  await app.listen(3000);
+  const port = Number(process.env.PORT) || 3000;
+  await app.listen(port);
+  console.log(`PROA escuchando en http://localhost:${port}`);
 }
 
 bootstrap();

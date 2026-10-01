@@ -66,10 +66,10 @@
                             </td>
                             <td data-label="Acciones" style="text-align: right;">
                                 <button type="button" class="btn-action"
-                                    onclick="abrirModalEditar({{this.id}}, '{{this.codigo}}', '{{this.nombre}}', '{{this.tipo}}', {{this.activo}})">
+                                    onclick="abrirModalEditar('{{this.id}}', '{{this.codigo}}', '{{this.nombre}}', '{{this.tipo}}', {{this.activo}})">
                                     Editar
                                 </button>
-                                <button type="button" class="btn-logout" onclick="eliminarAntibiotico({{this.id}})"
+                                <button type="button" class="btn-logout" onclick="eliminarAntibiotico('{{this.id}}')"
                                     style="display: inline-block;">
                                     Eliminar
                                 </button>

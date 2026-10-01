@@ -23,7 +23,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       const isSignInRoute = request.url.includes('/auth/sign-in');
       const hasToken = !!request?.cookies?.access_token;
       if (isSignInRoute && hasToken) {
-        response.redirect('/form');
+        response.redirect('/admin');
         return false;
       }
       return true;

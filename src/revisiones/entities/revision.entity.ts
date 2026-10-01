@@ -1,30 +1,34 @@
-import { Solicitud } from "src/solicitudes/entites/solicitud.entity";
-import { Usuario } from "src/usuarios/entities/usuarios.entities";
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
+import { AntibioticoState } from 'src/antibiotico/entities/antibiotico.state';
 
-@Entity('revisiones')
+export type RevisionDocument = HydratedDocument<Revision>;
+
+@Schema({
+  collection: 'revisiones',
+  timestamps: { createdAt: 'createdAt', updatedAt: false },
+})
 export class Revision {
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Solicitud', required: true, index: true })
+  solicitudId!: Types.ObjectId;
 
-  @PrimaryGeneratedColumn()
-  id!: number;
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Usuario', required: true, index: true })
+  usuarioId!: Types.ObjectId;
 
-  @Column({ type: 'int' })
-  solicitudId!: number;
+  /** Estado dictaminado. La vista revisiones_main lo muestra y lo filtra. */
+  @Prop({ type: String, enum: Object.values(AntibioticoState), required: true, index: true })
+  estado!: AntibioticoState;
 
-  @ManyToOne(() => Solicitud, solicitud => solicitud.revisiones)
-  @JoinColumn({ name: 'solicitudId' })
-  solicitud!: Solicitud;
+  /** Ítems de la solicitud alcanzados por el dictamen. */
+  @Prop({ type: [MongooseSchema.Types.ObjectId], default: [] })
+  itemsIds!: Types.ObjectId[];
 
-  @Column({ type: 'int' })
-  usuarioId!: number;
-
-  @ManyToOne(() => Usuario)
-  @JoinColumn({ name: 'usuarioId' })
-  usuario!: Usuario;
-
-  @Column({ type: 'varchar', length: 2000, nullable: true })
+  @Prop({ type: String, default: null, maxlength: 2000 })
   observacion!: string | null;
 
-  @CreateDateColumn()
   createdAt!: Date;
 }
+
+export const RevisionSchema = SchemaFactory.createForClass(Revision);
+
+RevisionSchema.index({ createdAt: -1 });

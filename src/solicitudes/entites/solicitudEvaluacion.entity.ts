@@ -1,51 +1,47 @@
-import {Entity,PrimaryGeneratedColumn,Column,OneToOne,JoinColumn,} from 'typeorm';
-import { Solicitud } from './solicitud.entity';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-@Entity('solicitud_evaluaciones')
+/**
+ * Subdocumento embebido dentro de Solicitud.
+ * En SQL Server era la tabla 'solicitud_evaluaciones' con relación 1:1;
+ * no tiene sentido independiente, por eso se embebe.
+ */
+@Schema({ _id: false })
 export class SolicitudEvaluacion {
-  @PrimaryGeneratedColumn()
-  id!: number;
-
-  @Column({ type: 'int' })
-  solicitudId!: number;
-
-  @OneToOne(() => Solicitud, (solicitud) => solicitud.evaluacion, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'solicitudId' })
-  solicitud!: Solicitud;
-
-  @Column({ type: 'varchar', length: 150 })
+  @Prop({ type: String, required: true, trim: true, maxlength: 150 })
   pacienteNombre!: string;
 
-  @Column({ type: 'varchar', length: 30 })
+  @Prop({ type: String, required: true, trim: true, maxlength: 30 })
   pacienteDocumento!: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Prop({ type: String, required: true, trim: true, maxlength: 255 })
   diagnosticoPrincipal!: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Prop({ type: String, required: true, trim: true, maxlength: 100 })
   diagnosticoRelacionado!: string;
 
-  @Column({ type: 'bit' })
+  @Prop({ type: Boolean, default: false })
   pacienteInfectado!: boolean;
 
-  @Column({ type: 'bit' })
+  @Prop({ type: Boolean, default: false })
   tratamientoPrevio!: boolean;
 
-  @Column({ type: 'nvarchar', length: 'MAX', nullable: true })
+  @Prop({ type: String, default: null })
   tratamientoPrevioDesc!: string | null;
 
-  @Column({ type: 'bit' })
+  @Prop({ type: Boolean, default: false })
   cultivosPrevios!: boolean;
 
-  @Column({ type: 'bit' })
+  @Prop({ type: Boolean, default: false })
   ajustadoGuiaProa!: boolean;
 
-  @Column({ type: 'nvarchar', length: 'MAX', nullable: true })
+  @Prop({ type: String, default: null })
   guiaIndicacion!: string | null;
 
-  @Column({ type: 'nvarchar', length: 'MAX', nullable: true })
+  @Prop({ type: String, default: null })
   antecedentes!: string | null;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  creatininaReporte!: string;
+  @Prop({ type: String, default: null, maxlength: 255 })
+  creatininaReporte!: string | null;
 }
+
+export const SolicitudEvaluacionSchema = SchemaFactory.createForClass(SolicitudEvaluacion);

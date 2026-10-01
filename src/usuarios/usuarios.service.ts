@@ -1,108 +1,115 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Usuario } from './entities/usuarios.entities';
-import { Repository } from 'typeorm';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
+import { Usuario } from './entities/usuarios.entities';
 import { ActualizarUsuario, CrearUsuario } from './dto/crearUsuario.dto';
-type UsuarioSinContrasena = Omit<Usuario, 'contraseña'>;
+import { toObjectId, toPlain } from 'src/utils/mongo.util';
 
 @Injectable()
 export class UsuariosService {
-    constructor(
-        @InjectRepository(Usuario) private readonly usuarioRepository: Repository<Usuario>) { }
+  constructor(@InjectModel(Usuario.name) private readonly usuarioModel: Model<Usuario>) {}
 
-    async getAllActive(): Promise<Usuario[]> {
-        return this.usuarioRepository.find({ where: { activo: true } });
+  async getAllActive(): Promise<any[]> {
+    const usuarios = await this.usuarioModel
+      .find({ activo: true })
+      .sort({ nombreCompleto: 1 })
+      .lean()
+      .exec();
+    return toPlain(usuarios);
+  }
+
+  async getById(id: string): Promise<any | null> {
+    const usuario = await this.usuarioModel.findById(toObjectId(id, 'usuario')).lean().exec();
+    return usuario ? toPlain(usuario) : null;
+  }
+
+  async getAllUser(): Promise<any[]> {
+    const usuarios = await this.usuarioModel.find().sort({ nombreCompleto: 1 }).lean().exec();
+    return toPlain(usuarios);
+  }
+
+  /** Incluye la contraseña (select:false en el schema); solo para autenticación. */
+  async getUserByUsuario(usuario: string): Promise<any | null> {
+    const encontrado = await this.usuarioModel
+      .findOne({ usuario, activo: true })
+      .select('+contraseña')
+      .lean()
+      .exec();
+
+    return encontrado ? toPlain(encontrado) : null;
+  }
+
+  async createUsuario(data: CrearUsuario): Promise<any> {
+    const isUsuarioInUse = await this.usuarioModel.exists({ usuario: data.usuario });
+    if (isUsuarioInUse) {
+      throw new BadRequestException(`El usuario ${data.usuario} ya se encuentra en uso`);
     }
 
-    async getById(id: number): Promise<Usuario | null> {
-        return this.usuarioRepository.findOne({ where: { id } });
+    const passwordHashed = await bcrypt.hash(data.contraseña, 10);
+
+    const creado = await this.usuarioModel.create({
+      usuario: data.usuario,
+      nombreCompleto: data.nombreCompleto,
+      rol: data.rol,
+      contraseña: passwordHashed,
+      activo: data.activo ?? true,
+    });
+
+    const usuarioSinPassword = await this.usuarioModel.findById(creado._id).lean().exec();
+
+    if (!usuarioSinPassword) {
+      throw new BadRequestException('El usuario fue creado pero no pudo ser recuperado');
     }
 
-    async getAllUser(): Promise<Usuario[]> {
-        return await this.usuarioRepository.find()
+    return toPlain(usuarioSinPassword);
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const actualizado = await this.usuarioModel
+      .findByIdAndUpdate(toObjectId(id, 'usuario'), { $set: { activo: false } })
+      .lean()
+      .exec();
+
+    if (!actualizado) {
+      throw new BadRequestException(`Usuario con id ${id} no existe o ya fue eliminado`);
     }
 
+    return true;
+  }
 
+  async update(id: string, data: ActualizarUsuario): Promise<any> {
+    const _id = toObjectId(id, 'usuario');
 
-    async getUserByUsuario(usuario: string): Promise<Usuario | null> {
-        return await this.usuarioRepository
-            .createQueryBuilder('usuario')
-            .addSelect('usuario.contraseña')
-            .where('usuario.usuario = :usuario', { usuario })
-            .andWhere('usuario.activo = :activo', { activo: true })
-            .getOne();
-    }
-    async createUsuario(data: CrearUsuario): Promise<Usuario> {
-        const passwordHashed = await bcrypt.hash(data.contraseña, 10);
-
-        const isUsuarioInUse = await this.usuarioRepository.findOne({ where: { usuario: data.usuario } })
-
-        if (isUsuarioInUse) {
-            throw new BadRequestException(`El usuario ${data.usuario} ya se encuentra en uso`)
-        }
-
-        const usuario = {
-            usuario: data.usuario,
-            nombreCompleto: data.nombreCompleto,
-            rol: data.rol,
-            contraseña: passwordHashed,
-            activo: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        }
-
-        this.usuarioRepository.create(usuario);
-
-        const usuarioGuardado = await this.usuarioRepository.save(usuario);
-
-        const usuarioSinPassword = await this.usuarioRepository.findOne({
-            where: { id: usuarioGuardado.id }
-        });
-
-        if (!usuarioSinPassword) {
-            throw new BadRequestException(
-                'El usuario fue creado pero no pudo ser recuperado'
-            );
-        }
-
-        return usuarioSinPassword;
+    const usuario = await this.usuarioModel.findById(_id).lean().exec();
+    if (!usuario) {
+      throw new BadRequestException(`Usuario con id ${id} no existe o ya fue eliminado`);
     }
 
-    async delete(id: number): Promise<boolean> {
-        const usuario = await this.usuarioRepository.findOne({ where: { id } });
-        if (!usuario) {
-            throw new BadRequestException(`Usuario con id ${id} no existe o ya fue eliminado`);
-        }
-
-        usuario.activo = false;
-        await this.usuarioRepository.save(usuario);
-
-        return true;
+    if (data.usuario) {
+      const existente = await this.usuarioModel
+        .findOne({ usuario: data.usuario, _id: { $ne: _id } })
+        .lean()
+        .exec();
+      if (existente) {
+        throw new BadRequestException(
+          `Ya existe un usuario con el nombre de usuario "${data.usuario}"`,
+        );
+      }
     }
 
-    async update(id: number, data: ActualizarUsuario): Promise<UsuarioSinContrasena> {
-        const usuario = await this.usuarioRepository.findOne({ where: { id } });
-        if (!usuario) {
-            throw new BadRequestException(`Usuario con id ${id} no existe o ya fue eliminado`);
-        }
+    const { contraseña, ...resto } = data;
+    const cambios: Record<string, any> = { ...resto };
 
-        if (data.usuario) {
-            const existente = await this.usuarioRepository.findOne({ where: { usuario: data.usuario } });
-            if (existente && existente.id !== id) {
-                throw new BadRequestException(`Ya existe un usuario con el nombre de usuario "${data.usuario}"`);
-            }
-        }
-
-        const { contraseña, ...resto } = data;
-        Object.assign(usuario, resto);
-
-        if (contraseña) {
-            usuario.contraseña = await bcrypt.hash(contraseña, 10);
-        }
-
-        const guardado = await this.usuarioRepository.save(usuario);
-        const { contraseña: _omit, ...sinContrasena } = guardado;
-        return sinContrasena;
+    if (contraseña) {
+      cambios.contraseña = await bcrypt.hash(contraseña, 10);
     }
+
+    const guardado = await this.usuarioModel
+      .findByIdAndUpdate(_id, { $set: cambios }, { new: true })
+      .lean()
+      .exec();
+
+    return toPlain(guardado);
+  }
 }

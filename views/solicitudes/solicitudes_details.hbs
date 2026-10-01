@@ -57,8 +57,95 @@
                             <label>Especialidad</label>
                             <p>{{solicitud.especialidad}}</p>
                         </div>
+                        <div class="info-item">
+                            <label>Diagnóstico principal</label>
+                            <p>{{solicitud.evaluacion.diagnosticoPrincipal}}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Diagnóstico relacionado</label>
+                            <p>{{solicitud.evaluacion.diagnosticoRelacionado}}</p>
+                        </div>
                     </div>
                 </section>
+
+                <!-- EVALUACIÓN CLÍNICA -->
+                <section class="detail-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
+                        Evaluación clínica
+                    </h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>¿Paciente infectado?</label>
+                            <p>{{#if solicitud.evaluacion.pacienteInfectado}}Sí{{else}}No{{/if}}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>¿Cultivos previos?</label>
+                            <p>{{#if solicitud.evaluacion.cultivosPrevios}}Sí{{else}}No{{/if}}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>¿Tratamiento antibiótico previo?</label>
+                            <p>{{#if solicitud.evaluacion.tratamientoPrevio}}Sí{{else}}No{{/if}}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>¿Ajustado a la guía PROA?</label>
+                            <p>{{#if solicitud.evaluacion.ajustadoGuiaProa}}Sí{{else}}No{{/if}}</p>
+                        </div>
+                        {{#if solicitud.evaluacion.tratamientoPrevioDesc}}
+                        <div class="info-item">
+                            <label>Tratamiento previo recibido</label>
+                            <p>{{solicitud.evaluacion.tratamientoPrevioDesc}}</p>
+                        </div>
+                        {{/if}}
+                        {{#if solicitud.evaluacion.guiaIndicacion}}
+                        <div class="info-item">
+                            <label>Indicación según la guía</label>
+                            <p>{{solicitud.evaluacion.guiaIndicacion}}</p>
+                        </div>
+                        {{/if}}
+                        {{#if solicitud.evaluacion.creatininaReporte}}
+                        <div class="info-item">
+                            <label>Reporte de creatinina</label>
+                            <p>{{solicitud.evaluacion.creatininaReporte}}</p>
+                        </div>
+                        {{/if}}
+                        {{#if solicitud.evaluacion.antecedentes}}
+                        <div class="info-item">
+                            <label>Antecedentes</label>
+                            <p>{{solicitud.evaluacion.antecedentes}}</p>
+                        </div>
+                        {{/if}}
+                    </div>
+                </section>
+
+                {{#if solicitud.profilaxis}}
+                <!-- PROFILAXIS -->
+                <section class="detail-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        Profilaxis
+                    </h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>¿Cirugía de ortopedia?</label>
+                            <p>{{solicitud.profilaxis.cirugiaOrtopedia}}</p>
+                        </div>
+                        {{#if solicitud.profilaxis.gustilloAnderson}}
+                        <div class="info-item">
+                            <label>¿Gustillo y Anderson III?</label>
+                            <p>{{solicitud.profilaxis.gustilloAnderson}}</p>
+                        </div>
+                        {{/if}}
+                    </div>
+                </section>
+                {{/if}}
 
                 <!-- TABLA: ANTIBIÓTICOS CON ACCIONES EN LOTE -->
                 <section class="detail-card">
@@ -71,26 +158,26 @@
                             Antibióticos prescritos
                         </h2>
 
+                        {{#if puedeDictaminar}}
                         <!-- Barra de acciones masivas sobre la tabla -->
-                        <div class="bulk-actions">
-                            <button class="btn-proa btn-proa-success btn-sm"
-                                onclick="dictaminarSeleccionados('APROBADO', '#16a34a')">
-                                Aprobar seleccionados
-                            </button>
+<div class="bulk-actions">
                             <button class="btn-proa btn-proa-danger btn-sm"
                                 onclick="dictaminarSeleccionados('SUSPENDIDO', '#dc2626')">
                                 Suspender seleccionados
                             </button>
                         </div>
+                        {{/if}}
                     </div>
 
                     <div class="items-table-wrap">
                         <table class="detail-table">
                             <thead>
                                 <tr>
+                                    {{#if puedeDictaminar}}
                                     <th style="width: 40px;" class="text-center">
                                         <input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)" />
                                     </th>
+                                    {{/if}}
                                     <th>Antibiótico</th>
                                     <th>Tipo</th>
                                     <th>Indicación</th>
@@ -104,6 +191,7 @@
                             <tbody>
                                 {{#each solicitud.items}}
                                 <tr>
+                                    {{#if ../puedeDictaminar}}
                                     <td class="text-center">
                                         {{#if (eq this.state 'FINALIZADO')}}
                                         <!-- Checkbox deshabilitado con data-state para fácil identificación -->
@@ -112,6 +200,7 @@
                                         <input type="checkbox" class="item-checkbox" value="{{this.id}}" data-state="{{this.state}}" />
                                         {{/if}}
                                     </td>
+                                    {{/if}}
                                     <td><strong>{{this.antibiotico.nombre}}</strong></td>
                                     <td>
                                         <span class="badge-tipo">
@@ -128,10 +217,12 @@
                                         </small>
                                     </td>
                                     <td>
-                                        {{#if (eq this.state 'FINALIZADO')}}
+                                        {{#if (eq this.state 'PENDIENTE')}}
+                                        <span class="status-badge status-pendiente">PENDIENTE</span>
+                                        {{else if (eq this.state 'FINALIZADO')}}
                                         <span class="status-badge status-finalizado">FINALIZADO</span>
                                         {{else if (eq this.state 'SUSPENDIDO')}}
-                                        <span class="status-badge status-rechazado">SUSPENDIDO</span>
+                                        <span class="status-badge status-suspendido">SUSPENDIDO</span>
                                         {{else}}
                                         <span class="status-badge status-aprobado">APROBADO</span>
                                         {{/if}}
@@ -139,7 +230,7 @@
                                 </tr>
                                 {{else}}
                                 <tr>
-                                    <td colspan="9" class="text-muted text-center" style="padding: 16px;">
+                                    <td colspan="{{#if puedeDictaminar}}9{{else}}8{{/if}}" class="text-muted text-center" style="padding: 16px;">
                                         No se registraron ítems en esta solicitud.
                                     </td>
                                 </tr>
@@ -189,6 +280,7 @@
     </main>
 </div>
 
+{{#if puedeDictaminar}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
@@ -204,7 +296,7 @@
         const seleccionadosNodes = Array.from(document.querySelectorAll('.item-checkbox:checked:not(:disabled)'))
             .filter(cb => cb.getAttribute('data-state') !== 'FINALIZADO');
 
-        const seleccionados = seleccionadosNodes.map(cb => Number(cb.value));
+        const seleccionados = seleccionadosNodes.map(cb => cb.value);
 
         if (seleccionados.length === 0) {
             Swal.fire(
@@ -215,7 +307,7 @@
             return;
         }
 
-        const accionTexto = nuevoEstado === 'APROBADO' ? 'Aprobar' : 'Suspender';
+        const accionTexto = 'Suspender';
 
         const { value: observacion, isConfirmed } = await Swal.fire({
             title: `${accionTexto} ${seleccionados.length} medicamento(s)`,
@@ -227,7 +319,7 @@
             confirmButtonText: `Confirmar (${accionTexto})`,
             cancelButtonText: 'Cancelar',
             inputValidator: (value) => {
-                if (nuevoEstado === 'SUSPENDIDO' && !value.trim()) {
+                if (!value.trim()) {
                     return 'Debe ingresar una observación para suspender los medicamentos seleccionados.';
                 }
             }
@@ -250,11 +342,11 @@
             if (res.ok) {
                 await Swal.fire({
                     icon: 'success',
-                    title: 'Medicamentos y revisión actualizados',
+                    title: 'Suspensión registrada',
                     timer: 1500,
                     showConfirmButton: false
                 });
-                window.location.reload();
+                window.location.href = '/admin';
             } else {
                 const errorData = await res.json();
                 Swal.fire('Error', errorData.message || 'No se pudieron actualizar los medicamentos', 'error');
@@ -264,3 +356,4 @@
         }
     }
 </script>
+{{/if}}

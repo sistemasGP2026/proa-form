@@ -1,14 +1,26 @@
-// usuarios.controller.ts
 import {
-  Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Render, Req, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Render,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { UsuariosService } from './usuarios.service';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-guard.guard';
-import { Usuario } from './entities/usuarios.entities';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { AuthRole } from 'src/auth/decorator/auth-role.decorator';
+import { Rol } from 'src/usuarios/entities/rol.enum';
 import { ActualizarUsuario, CrearUsuario } from './dto/crearUsuario.dto';
+import { ParseObjectIdPipe } from 'src/common/pipes/parse-objectid.pipe';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@AuthRole(Rol.ADMINISTRADOR)
 @Controller('usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
@@ -27,7 +39,7 @@ export class UsuariosController {
   }
 
   @Get(':id')
-  async getById(@Param('id', ParseIntPipe) id: number): Promise<Usuario | null> {
+  async getById(@Param('id', ParseObjectIdPipe) id: string) {
     return this.usuariosService.getById(id);
   }
 
@@ -37,13 +49,13 @@ export class UsuariosController {
   }
 
   @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async delete(@Param('id', ParseObjectIdPipe) id: string) {
     await this.usuariosService.delete(id);
     return { msg: 'Usuario eliminado correctamente' };
   }
 
   @Patch(':id')
-  async update(@Param('id', ParseIntPipe) id: number, @Body() data: ActualizarUsuario) {
+  async update(@Param('id', ParseObjectIdPipe) id: string, @Body() data: ActualizarUsuario) {
     return this.usuariosService.update(id, data);
   }
 }

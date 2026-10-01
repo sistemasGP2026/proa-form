@@ -3,44 +3,60 @@
 <header class="admin-top-bar">
   <!-- NAVEGACIÓN -->
   <nav class="admin-nav-tabs">
+    {{#if (puedeVer usuario.rol 'solicitudes')}}
     <a href="/admin" class="nav-tab {{#if (eq currentPath '/solicitudes')}}active{{/if}}">
       <span>Solicitudes</span>
     </a>
+    {{/if}}
 
+    {{#if (puedeVer usuario.rol 'sedes')}}
     <a href="/sedes" class="nav-tab {{#if (eq currentPath '/sedes')}}active{{/if}}">
       <span>Sedes</span>
     </a>
+    {{/if}}
 
+    {{#if (puedeVer usuario.rol 'especialidades')}}
     <a href="/especialidades" class="nav-tab {{#if (eq currentPath '/especialidades')}}active{{/if}}">
       <span>Especialidades</span>
     </a>
+    {{/if}}
 
+    {{#if (puedeVer usuario.rol 'diagnosticos')}}
     <a href="/diagnosticos" class="nav-tab {{#if (eq currentPath '/diagnosticos')}}active{{/if}}">
       <span>Diagnósticos</span>
     </a>
+    {{/if}}
 
+    {{#if (puedeVer usuario.rol 'servicios')}}
     <a href="/servicios" class="nav-tab {{#if (eq currentPath '/servicios')}}active{{/if}}">
       <span>Servicios</span>
     </a>
+    {{/if}}
 
+    {{#if (puedeVer usuario.rol 'antibioticos')}}
     <a href="/antibioticos" class="nav-tab {{#if (eq currentPath '/antibioticos')}}active{{/if}}">
       <span>Antibióticos</span>
     </a>
+    {{/if}}
 
+    {{#if (puedeVer usuario.rol 'revisiones')}}
     <a href="/revisiones" class="nav-tab {{#if (eq currentPath '/revisiones')}}active{{/if}}">
       <span>Revisiones</span>
     </a>
+    {{/if}}
 
+    {{#if (puedeVer usuario.rol 'usuarios')}}
     <a href="/usuarios" class="nav-tab {{#if (eq currentPath '/usuarios')}}active{{/if}}">
       <span>Usuarios</span>
     </a>
+    {{/if}}
   </nav>
 
   <!-- USUARIO Y SALIR -->
   <div class="user-menu">
     <div class="user-info">
       <span class="user-name">{{#if usuario.nombre}}{{usuario.nombre}}{{else}}Usuario PROA{{/if}}</span>
-      <span class="user-role">{{#if usuario.rol}}{{usuario.rol}}{{else}}Auditor{{/if}}</span>
+      <span class="user-role">{{#if usuario.rol}}{{nombreRol usuario.rol}}{{else}}Usuario PROA{{/if}}</span>
     </div>
     <button type="button" class="btn-logout" onclick="cerrarSesion()" title="Cerrar Sesión">
       Salir
@@ -50,6 +66,11 @@
 
 <script>
   async function cerrarSesion() {
+    try {
+      await fetch('/auth/logout', { method: 'POST' });
+    } catch (e) {
+      console.error('No se pudo cerrar la sesión:', e);
+    }
     window.location.href = '/auth/sign-in';
   }
 </script>

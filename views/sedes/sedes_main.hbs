@@ -56,10 +56,10 @@
                 {{/if}}
               </td>
               <td data-label="Acciones" style="text-align: right;">
-                <button type="button" class="btn-action" onclick="abrirModalEditar({{this.id}}, '{{this.codigo}}', '{{this.nombre}}', {{this.activo}})">
+                <button type="button" class="btn-action" onclick="abrirModalEditar('{{this.id}}', '{{this.codigo}}', '{{this.nombre}}', {{this.activo}})">
                   Editar
                 </button>
-                <button type="button" class="btn-logout" onclick="eliminarSede({{this.id}})" style="display: inline-block;">
+                <button type="button" class="btn-logout" onclick="eliminarSede('{{this.id}}')" style="display: inline-block;">
                   Eliminar
                 </button>
               </td>
@@ -160,7 +160,7 @@
       };
 
       const url = id ? `/sedes/${id}` : '/sedes';
-      const method = id ? 'PUT' : 'POST';
+      const method = id ? 'PATCH' : 'POST';
 
       try {
         const res = await fetch(url, {

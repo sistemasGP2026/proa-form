@@ -22,6 +22,15 @@
   --status-obs-bg: #eff6ff;
   --status-obs-border: #bfdbfe;
   --status-obs-text: #1e40af;
+
+  /* Estados reales del dictamen PROA */
+  --status-susp-bg: #fef2f2;
+  --status-susp-border: #fecaca;
+  --status-susp-text: #991b1b;
+
+  --status-fin-bg: #f1f5f9;
+  --status-fin-border: #cbd5e1;
+  --status-fin-text: #475569;
 }
 
 * {
@@ -336,6 +345,8 @@ select.admin-control {
 .status-aprobado  { background-color: var(--status-aprob-bg); border-color: var(--status-aprob-border); color: var(--status-aprob-text); }
 .status-rechazado { background-color: var(--status-rech-bg); border-color: var(--status-rech-border); color: var(--status-rech-text); }
 .status-observado { background-color: var(--status-obs-bg); border-color: var(--status-obs-border); color: var(--status-obs-text); }
+.status-suspendido { background-color: var(--status-susp-bg); border-color: var(--status-susp-border); color: var(--status-susp-text); }
+.status-finalizado { background-color: var(--status-fin-bg); border-color: var(--status-fin-border); color: var(--status-fin-text); }
 
 .btn-action {
   display: inline-block;

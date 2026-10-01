@@ -4,22 +4,25 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
+  Put,
   Render,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
-import { JwtAuthGuard } from 'src/auth/guard/jwt-guard.guard';
 import { SedesService } from './sedes.service';
 import { CreateSede } from './dto/createSede.dto';
-import { Sede } from './entities/sede.entity';
 import { UpdateSede } from './dto/updateSede.dto';
-import { Public } from 'src/auth/decorator/is-public.decorator';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-guard.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { AuthRole } from 'src/auth/decorator/auth-role.decorator';
+import { Rol } from 'src/usuarios/entities/rol.enum';
+import { ParseObjectIdPipe } from 'src/common/pipes/parse-objectid.pipe';
 
-@Public()
+@UseGuards(JwtAuthGuard, RolesGuard)
+@AuthRole(Rol.ADMINISTRADOR)
 @Controller('sedes')
 export class SedesController {
   constructor(private readonly sedesService: SedesService) {}
@@ -41,26 +44,29 @@ export class SedesController {
   }
 
   @Get(':id')
-  async getSedeById(@Param('id', ParseIntPipe) id: number): Promise<Sede | null> {
+  async getSedeById(@Param('id', ParseObjectIdPipe) id: string) {
     return this.sedesService.findSedeById(id);
   }
 
   @Post()
-  async createSede(@Body() data: CreateSede): Promise<Sede> {
+  async createSede(@Body() data: CreateSede) {
     return this.sedesService.createSede(data);
   }
 
   @Delete(':id')
-  async deleteSede(@Param('id', ParseIntPipe) id: number) {
+  async deleteSede(@Param('id', ParseObjectIdPipe) id: string) {
     await this.sedesService.deleteSede(id);
     return { msg: 'Sede eliminada correctamente' };
   }
 
   @Patch(':id')
-  async updateSede(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() data: UpdateSede,
-  ): Promise<Sede> {
+  async updateSede(@Param('id', ParseObjectIdPipe) id: string, @Body() data: UpdateSede) {
+    return this.sedesService.updateSede(id, data);
+  }
+
+  /** Alias: la vista sedes_main enviaba PUT mientras el backend solo exponía PATCH. */
+  @Put(':id')
+  async updateSedePut(@Param('id', ParseObjectIdPipe) id: string, @Body() data: UpdateSede) {
     return this.sedesService.updateSede(id, data);
   }
 }

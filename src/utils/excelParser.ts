@@ -2,7 +2,15 @@ import { Workbook } from 'exceljs';
 import { Response } from 'express';
 
 export class ExcelParser {
-  async exportToExcel(data: any[],columns: any[],res: Response,filename: string,sheetName: string) {
+  async exportToExcel(
+    data: any[],
+    columns: any[],
+    res: Response,
+    filename: string,
+    sheetName: string,
+    /** Columnas (1-based) que van centradas. Si se omite, se centran las de la hoja antigua. */
+    columnasCentradas: number[] = [1, 2, 6, 10],
+  ) {
     const workbook = new Workbook();
     const worksheet = workbook.addWorksheet(sheetName);
 
@@ -52,7 +60,7 @@ export class ExcelParser {
           right: { style: 'thin', color: { argb: 'E2E8F0' } },
         };
 
-        if ([1, 2, 6, 10].includes(colNumber)) {
+        if (columnasCentradas.includes(colNumber)) {
           cell.alignment = { vertical: 'middle', horizontal: 'center' };
         }
       });

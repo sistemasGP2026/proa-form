@@ -59,10 +59,10 @@
                             </td>
                             <td data-label="Acciones" style="text-align: right;">
                                 <button type="button" class="btn-action"
-                                    onclick="abrirModalEditar({{this.id}}, '{{this.nombreCompleto}}', '{{this.usuario}}', '{{this.rol}}', {{this.activo}})">
+                                    onclick="abrirModalEditar('{{this.id}}', '{{this.nombreCompleto}}', '{{this.usuario}}', '{{this.rol}}', {{this.activo}})">
                                     Editar
                                 </button>
-                                <button type="button" class="btn-logout" onclick="eliminarUsuario({{this.id}})"
+                                <button type="button" class="btn-logout" onclick="eliminarUsuario('{{this.id}}')"
                                     style="display: inline-block;">
                                     Eliminar
                                 </button>
@@ -111,8 +111,7 @@
                     <select id="usuarioRol" class="admin-control" required>
                         <option value="">Seleccione</option>
                         <option value="ADMINISTRADOR">Administrador</option>
-                        <option value="AUX_FARMACIA">Auxiliar de Farmacia</option>
-                        <option value="SOLICITANTE">Solicitante</option>
+                        <option value="AUDITOR_PROA">Auditor PROA</option>
                     </select>
                 </div>
 

@@ -1,9 +1,10 @@
-import { IsIn } from "class-validator";
+import { IsIn, IsOptional } from 'class-validator';
 
 export class ProfilaxisDto {
-    @IsIn(['SI', 'NO'])
-    cirugiaOrtopedia!: string;
+  @IsIn(['SI', 'NO'])
+  cirugiaOrtopedia!: string;
 
-    @IsIn(['SI', 'NO'])
-    gustilloAnderson!: string;
+  @IsOptional()
+  @IsIn(['SI', 'NO', ''])
+  gustilloAnderson?: string;
 }

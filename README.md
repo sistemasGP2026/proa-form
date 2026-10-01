@@ -1,98 +1,168 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# PROA — Formulario de Autorización de Antimicrobianos
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Aplicación monolítica **NestJS + Handlebars + MongoDB** para el Programa de
+Optimización de Antimicrobianos (PROA).
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
-
-```bash
-$ npm install
+```
+Usuario
+   ↓
+NestJS
+   ├── Controllers
+   ├── Services
+   ├── Auth / JWT (cookie httpOnly)
+   ├── Mongoose
+   ├── MongoDB
+   └── Vistas Handlebars
 ```
 
-## Compile and run the project
+---
 
-```bash
-# development
-$ npm run start
+## Requisitos
 
-# watch mode
-$ npm run start:dev
+- Node.js 20 o superior
+- MongoDB 6 o superior (local o Atlas)
+- MongoDB Compass (opcional, para inspeccionar los datos)
 
-# production mode
-$ npm run start:prod
+## Puesta en marcha
+
+```powershell
+npm install
+Copy-Item .env.example .env    # y ajuste los valores
+npm run seed -- --catalogos    # usuario administrador + catálogos base
+npm run start:dev
 ```
 
-## Run tests
+La aplicación queda en `http://localhost:3000`.
+El ingreso es `/auth/sign-in`; el formulario clínico es `/form`.
 
-```bash
-# unit tests
-$ npm run test
+### Variables de entorno
 
-# e2e tests
-$ npm run test:e2e
+| Variable | Descripción |
+|---|---|
+| `PORT` | Puerto HTTP. Por defecto `3000`. |
+| `MONGODB_URI` | Cadena de conexión. Local: `mongodb://127.0.0.1:27017/proa`. Atlas: `mongodb+srv://...` |
+| `JWT_SECRET` | Secreto de firma del token. **Cámbielo en producción.** |
+| `JWT_EXPIRES` | Vigencia del token, p. ej. `8h`. |
+| `NODE_ENV` | `development` o `production`. En producción se desactiva `autoIndex`. |
 
-# test coverage
-$ npm run test:cov
+El archivo `.env` no se versiona. Use `.env.example` como plantilla.
+
+---
+
+## Base de datos
+
+Base: **`proa`**. Colecciones:
+
+| Colección | Contenido |
+|---|---|
+| `usuarios` | Credenciales y rol (`ADMINISTRADOR`, `AUX_FARMACIA`, `SOLICITANTE`). Contraseñas con bcrypt. |
+| `sedes` | Catálogo de sedes. |
+| `servicios` | Catálogo de servicios / áreas. |
+| `diagnosticos_infecciosos` | Catálogo de diagnósticos. |
+| `especialidades_tratantes` | Catálogo de especialidades. |
+| `antibioticos` | Catálogo, con tipo `RESTRINGIDO` o `VIGILADO`. |
+| `solicitudes` | Solicitud con `evaluacion`, `profilaxis` e `items[]` **embebidos**. |
+| `revisiones` | Dictámenes sobre solicitudes; referencia a solicitud y usuario. |
+
+### Criterios de modelado
+
+- **Embebido** lo que no tiene sentido fuera de su documento padre: la evaluación
+  del paciente, la condición de profilaxis y los ítems formulados viven dentro de
+  la solicitud. Cada ítem conserva su propio `_id`, que es el identificador que usa
+  el dictamen en lote.
+- **Referenciado** lo que se consulta y administra por separado: sedes,
+  antibióticos y usuarios.
+- El **estado de un antibiótico prescrito vive en el ítem**, no en el catálogo.
+  En el modelo SQL Server anterior el estado se guardaba en la tabla `antibioticos`,
+  de modo que suspender un medicamento en una solicitud lo suspendía en todas.
+- `FINALIZADO` no se almacena: se calcula comparando `fechaFin` con la fecha
+  actual, igual que hacía el `CASE ... GETDATE()` de SQL Server.
+
+---
+
+## Scripts
+
+| Comando | Qué hace |
+|---|---|
+| `npm run start:dev` | Desarrollo con recarga automática. |
+| `npm run build` | Compila a `dist/`. |
+| `npm run start:prod` | Ejecuta `dist/main`. |
+| `npm run seed` | Crea el usuario administrador. Idempotente. |
+| `npm run seed -- --catalogos` | Además carga sedes, servicios, diagnósticos, especialidades y antibióticos base. |
+| `npm run migrate` | Migración SQL Server → MongoDB en **simulación**. |
+| `npm run migrate -- --aplicar` | Ejecuta la migración escribiendo en MongoDB. |
+
+### Usuario inicial
+
+`npm run seed` crea `admin` / `Proa2026*` si no existe.
+Cámbielo desde `/usuarios` después del primer ingreso, o defina
+`SEED_ADMIN_USER`, `SEED_ADMIN_PASSWORD` y `SEED_ADMIN_NOMBRE` antes de ejecutarlo.
+
+### Migración de datos desde SQL Server
+
+El script lee `Proa_Form`, transforma los registros y los inserta en MongoDB.
+No borra nada y, sin `--aplicar`, no escribe: solo informa estadísticas e
+incidencias. Requiere el paquete `mssql`, que ya no es dependencia de la
+aplicación:
+
+```powershell
+npm install --no-save mssql
+# complete las variables SQLSERVER_* en .env
+npm run migrate                 # revise el informe
+npm run migrate -- --aplicar    # ejecute
 ```
 
-## Deployment
+---
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Estructura
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+```
+proa-form/
+├── src/
+│   ├── admin/          antibiotico/     auth/
+│   ├── catalogos/      diagnostico_infeccioso · especialidad_tratante · sedes · servicios
+│   ├── common/pipes/   ParseObjectIdPipe (sustituye a ParseIntPipe)
+│   ├── form/           jwt/             revisiones/
+│   ├── solicitudes/    usuarios/        utils/
+│   ├── app.module.ts
+│   └── main.ts
+├── views/              plantillas .hbs, CSS y JS del navegador
+├── scripts/            seed.ts · migrate-sqlserver-to-mongodb.ts
+├── .env.example
+└── package.json
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Nota sobre Handlebars y Mongoose
 
-## Resources
+Handlebars bloquea el acceso a propiedades heredadas del prototipo, y los
+documentos hidratados de Mongoose exponen sus campos precisamente así. Por eso
+las consultas usan `.lean()` y pasan por `toPlain()` (`src/utils/mongo.util.ts`),
+que convierte `ObjectId` a cadena y agrega `id` junto a `_id`. Sin esa
+conversión las vistas se renderizarían vacías.
 
-Check out a few resources that may come in handy when working with NestJS:
+---
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Rutas
 
-## Support
+| Método | Ruta | Descripción |
+|---|---|---|
+| `GET` | `/form` | Formulario clínico (público). |
+| `POST` | `/solicitudes` | Registra una solicitud (público). |
+| `GET`/`POST` | `/auth/sign-in`, `POST /auth/logout` | Sesión. |
+| `GET` | `/admin` | Tablero de solicitudes. |
+| `GET` | `/solicitudes`, `/solicitudes/:id`, `/solicitudes/download` | Listado, detalle y exportación a Excel. |
+| `PATCH` | `/solicitudes/:id/items/estado` | Dictamen en lote; genera una revisión. |
+| `GET` | `/revisiones`, `/revisiones/:id` | Historial de dictámenes. |
+| — | `/sedes`, `/servicios`, `/diagnosticos`, `/especialidades`, `/antibioticos`, `/usuarios` | CRUD de catálogos y usuarios. |
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+---
 
-## Stay in touch
+## Pendientes conocidos
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- Los catálogos `/sedes`, `/servicios`, `/diagnosticos` y `/especialidades` están
+  marcados `@Public()` con CRUD completo: cualquiera sin autenticar puede crear o
+  eliminar registros. Conviene protegerlos con `JwtAuthGuard`.
+- Tras enviar el formulario, `POST /solicitudes` devuelve JSON en crudo en lugar
+  de una página de confirmación.
+- `views/partials/layout/main.hbs` y `views/partials/components/card-antibiotico.hbs`
+  no los incluye ninguna vista.

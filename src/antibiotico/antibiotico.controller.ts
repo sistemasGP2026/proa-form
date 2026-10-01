@@ -1,11 +1,26 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Render, Req, UseGuards} from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Render,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { AntibioticoService } from './antibiotico.service';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-guard.guard';
-import { Antibiotico } from './entities/antibioticos.entity';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { AuthRole } from 'src/auth/decorator/auth-role.decorator';
+import { Rol } from 'src/usuarios/entities/rol.enum';
 import { CreateAntibiotico, UpdateAntibiotico } from './dto/antibiotico.dto';
+import { ParseObjectIdPipe } from 'src/common/pipes/parse-objectid.pipe';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@AuthRole(Rol.ADMINISTRADOR, Rol.AUDITOR_PROA)
 @Controller('antibioticos')
 export class AntibioticoController {
   constructor(private readonly antibioticoService: AntibioticoService) {}
@@ -24,26 +39,23 @@ export class AntibioticoController {
   }
 
   @Get(':id')
-  async getById(@Param('id', ParseIntPipe) id: number): Promise<Antibiotico | null> {
+  async getById(@Param('id', ParseObjectIdPipe) id: string) {
     return this.antibioticoService.getById(id);
   }
 
   @Post()
-  async create(@Body() data: CreateAntibiotico): Promise<Antibiotico> {
+  async create(@Body() data: CreateAntibiotico) {
     return this.antibioticoService.create(data);
   }
 
   @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async delete(@Param('id', ParseObjectIdPipe) id: string) {
     await this.antibioticoService.delete(id);
     return { msg: 'Antibiótico eliminado correctamente' };
   }
 
   @Patch(':id')
-  async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() data: UpdateAntibiotico,
-  ): Promise<Antibiotico> {
+  async update(@Param('id', ParseObjectIdPipe) id: string, @Body() data: UpdateAntibiotico) {
     return this.antibioticoService.update(id, data);
   }
 }

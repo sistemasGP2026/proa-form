@@ -1,5 +1,13 @@
 <title>Programa PROA</title>
 <link rel="stylesheet" href="css/admin.styles.css">
+<style>
+  /* La cabecera se repite antes de cada paciente para separarlos.
+     En pantallas pequenas la tabla ya se convierte en fichas y la
+     cabecera estorba, asi que ahi solo queda la franja gris. */
+  @media (max-width: 768px) {
+    .admin-table tbody tr.repeticion-cabecera { display: none; }
+  }
+</style>
 <div class="admin-page">
   {{> admin_nav}}
 
@@ -7,8 +15,13 @@
 
     <header class="admin-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
       <div>
+        {{#if verAnuladas}}
+        <h1>Solicitudes anuladas</h1>
+        <p>Solicitudes retiradas de los listados. Puede reactivarlas o eliminarlas definitivamente.</p>
+        {{else}}
         <h1>Solicitudes de autorizacion PROA</h1>
         <p>Listado general de solicitudes registradas para control y seguimiento de antibióticos.</p>
+        {{/if}}
       </div>
       <div>
         <a href="/solicitudes/download" class="btn-action btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; padding: 0.6rem 1rem;">
@@ -19,6 +32,19 @@
           </svg>
           Descargar Excel
         </a>
+        {{#if esAdministrador}}
+        {{#if verAnuladas}}
+        <a href="/admin" class="btn-action"
+          style="display: inline-flex; align-items: center; text-decoration: none; padding: 0.6rem 1rem; margin-left: 0.5rem;">
+          Ver solicitudes activas
+        </a>
+        {{else}}
+        <a href="/admin?anuladas=1" class="btn-action"
+          style="display: inline-flex; align-items: center; text-decoration: none; padding: 0.6rem 1rem; margin-left: 0.5rem;">
+          Ver anuladas
+        </a>
+        {{/if}}
+        {{/if}}
       </div>
     </header>
 
@@ -37,10 +63,9 @@
       <div class="filter-group">
         <select class="admin-control">
           <option value="">Todos los estados</option>
-          <option value="PENDIENTE">PENDIENTE</option>
           <option value="APROBADO">APROBADO</option>
-          <option value="RECHAZADO">RECHAZADO</option>
-          <option value="OBSERVADO">OBSERVADO</option>
+          <option value="SUSPENDIDO">SUSPENDIDO</option>
+          <option value="FINALIZADO">FINALIZADO</option>
         </select>
       </div>
     </div>
@@ -51,6 +76,7 @@
           <tr>
             <th>ID / Fecha</th>
             <th>Paciente</th>
+            <th>Identificación</th>
             <th>Ubicación</th>
             <th>Diagnóstico</th>
             <th>Acciones</th>
@@ -58,32 +84,145 @@
         </thead>
         <tbody>
           {{#each solicitudes}}
+          {{#unless @first}}
+          <tr aria-hidden="true">
+            <td colspan="6" style="padding: 0; border: none; height: 16px; background: #eef2f7;"></td>
+          </tr>
+          <tr class="repeticion-cabecera">
+            <th>ID / Fecha</th>
+            <th>Paciente</th>
+            <th>Identificación</th>
+            <th>Ubicación</th>
+            <th>Diagnóstico</th>
+            <th>Acciones</th>
+          </tr>
+          {{/unless}}
           <tr>
-            <td data-label="Fecha">
+            <td data-label="Fecha" style="border-left: 3px solid #0284c7; border-bottom: none;">
               <div class="text-muted text-sm">
                 {{formatDate this.submittedAt}}
               </div>
             </td>
-            <td data-label="Paciente">
+            <td data-label="Paciente" style="border-bottom: none;">
               <strong class="text-muted text-sm">{{this.evaluacion.pacienteNombre}}</strong>
             </td>
-            <td data-label="Ubicación">
+            <td data-label="Identificación" style="border-bottom: none;">
+              <span class="text-muted text-sm">{{this.evaluacion.pacienteDocumento}}</span>
+            </td>
+            <td data-label="Ubicación" style="border-bottom: none;">
               <div>{{this.sede.nombre}}-</div>
               <div class="text-muted text-sm">{{this.servicio}}</div>
             </td>
-            <td data-label="Diagnóstico">
+            <td data-label="Diagnóstico" style="border-bottom: none;">
               <span>{{this.evaluacion.diagnosticoPrincipal}}</span>
             </td>
-            <td data-label="Acciones">
+            <td data-label="Acciones" style="border-bottom: none;">
               <a href="/solicitudes/{{this.id}}" class="btn-action">
                 detalle
               </a>
+              {{#if ../esAdministrador}}
+              {{#if ../verAnuladas}}
+              <button type="button" class="btn-action"
+                onclick="reactivarSolicitud('{{this.id}}')" style="margin-left: 0.35rem; cursor: pointer;">
+                reactivar
+              </button>
+              <button type="button" class="btn-logout"
+                onclick="eliminarSolicitud('{{this.id}}')" style="margin-left: 0.35rem; cursor: pointer;">
+                eliminar
+              </button>
+              {{else}}
+              <button type="button" class="btn-logout"
+                onclick="anularSolicitud('{{this.id}}')" style="margin-left: 0.35rem; cursor: pointer;">
+                anular
+              </button>
+              {{/if}}
+              {{/if}}
+            </td>
+          </tr>
+
+          <!-- Detalle en la misma fila: evaluación y antibióticos prescritos -->
+          <tr>
+            <td colspan="6" style="padding: 0 0 1rem 0;">
+              <div style="border-left: 3px solid #0284c7; padding: 0.75rem 1rem; background: #f8fafc;">
+
+                <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 0.75rem;">
+                  <div>
+                    <div class="text-muted text-xs">Cama</div>
+                    <div class="text-sm">{{this.habitacion}}</div>
+                  </div>
+                  <div>
+                    <div class="text-muted text-xs">Especialidad</div>
+                    <div class="text-sm">{{this.especialidad}}</div>
+                  </div>
+                  <div>
+                    <div class="text-muted text-xs">Diagnóstico relacionado</div>
+                    <div class="text-sm">{{this.evaluacion.diagnosticoRelacionado}}</div>
+                  </div>
+                  <div>
+                    <div class="text-muted text-xs">Médico que prescribe</div>
+                    <div class="text-sm">{{this.medicoPrescribe}}</div>
+                  </div>
+                  <div>
+                    <div class="text-muted text-xs">Indicación</div>
+                    <div class="text-sm">{{#if this.evaluacion.pacienteInfectado}}Paciente infectado{{else}}Sin infección confirmada{{/if}}{{#if this.evaluacion.ajustadoGuiaProa}} · Ajustado a guía PROA{{/if}}</div>
+                  </div>
+                </div>
+
+                <div class="text-muted text-xs" style="margin-bottom: 0.35rem;">Antibióticos prescritos</div>
+                <table class="admin-table" style="margin: 0;">
+                  <thead>
+                    <tr>
+                      <th>Antibiótico</th>
+                      <th>Tipo</th>
+                      <th>Dosis / Frecuencia</th>
+                      <th>Vía</th>
+                      <th>Duración</th>
+                      <th>Vigencia</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{#each this.items}}
+                    <tr>
+                      <td data-label="Antibiótico"><strong>{{this.antibiotico.nombre}}</strong></td>
+                      <td data-label="Tipo"><span class="text-muted text-sm">{{this.antibiotico.tipo}}</span></td>
+                      <td data-label="Dosis"><strong>{{this.dosis}}</strong> <span class="text-muted text-sm">/ {{this.frecuencia}}</span></td>
+                      <td data-label="Vía">{{this.viaAdministracion}}</td>
+                      <td data-label="Duración">{{this.duracion}} día(s)</td>
+                      <td data-label="Vigencia">
+                        <span class="text-muted text-sm">{{formatOnlyDate this.fechaInicio}} - {{formatOnlyDate this.fechaFin}}</span>
+                      </td>
+                      <td data-label="Estado">
+                        {{#if (eq this.state 'PENDIENTE')}}
+                        <span class="status-pill status-pendiente">PENDIENTE</span>
+                        {{else if (eq this.state 'SUSPENDIDO')}}
+                        <span class="status-pill status-suspendido">SUSPENDIDO</span>
+                        {{else if (eq this.state 'FINALIZADO')}}
+                        <span class="status-pill status-finalizado">FINALIZADO</span>
+                        {{else}}
+                        <span class="status-pill status-aprobado">APROBADO</span>
+                        {{/if}}
+                      </td>
+                    </tr>
+                    {{else}}
+                    <tr>
+                      <td colspan="7" class="table-empty">Sin antibióticos registrados.</td>
+                    </tr>
+                    {{/each}}
+                  </tbody>
+                </table>
+
+              </div>
             </td>
           </tr>
           {{else}}
           <tr>
             <td colspan="6" class="table-empty">
+              {{#if verAnuladas}}
+              No hay solicitudes anuladas.
+              {{else}}
               No se encontraron solicitudes registradas.
+              {{/if}}
             </td>
           </tr>
           {{/each}}
@@ -93,3 +232,108 @@
 
   </main>
 </div>
+
+{{#if esAdministrador}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  async function llamar(url, metodo, cuerpo) {
+    const respuesta = await fetch(url, {
+      method: metodo,
+      headers: { 'Content-Type': 'application/json' },
+      body: cuerpo ? JSON.stringify(cuerpo) : undefined,
+    });
+
+    let datos = null;
+    try { datos = await respuesta.json(); } catch (e) { datos = null; }
+
+    if (!respuesta.ok) {
+      throw new Error((datos && datos.message) || 'No fue posible completar la operación.');
+    }
+    return datos;
+  }
+
+  async function anularSolicitud(id) {
+    const { value: motivo, isConfirmed } = await Swal.fire({
+      icon: 'warning',
+      title: '¿Anular esta solicitud?',
+      input: 'textarea',
+      inputLabel: 'Motivo de la anulación (opcional)',
+      inputPlaceholder: 'Por ejemplo: registro duplicado, datos errados…',
+      html: '<p style="text-align:left">Dejará de aparecer en los listados y en la consulta por paciente. Podrá reactivarla después desde <strong>Ver anuladas</strong>.</p>',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      confirmButtonText: 'Sí, anular',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+    });
+
+    if (!isConfirmed) return;
+
+    try {
+      await llamar(`/solicitudes/${id}/anular`, 'PATCH', { motivo: motivo || '' });
+      await Swal.fire({ icon: 'success', title: 'Solicitud anulada', timer: 1400, showConfirmButton: false });
+      window.location.reload();
+    } catch (e) {
+      Swal.fire('Error', e.message, 'error');
+    }
+  }
+
+  async function reactivarSolicitud(id) {
+    const { isConfirmed } = await Swal.fire({
+      icon: 'question',
+      title: '¿Reactivar esta solicitud?',
+      text: 'Volverá a aparecer en los listados y en la consulta por paciente.',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, reactivar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+    });
+
+    if (!isConfirmed) return;
+
+    try {
+      await llamar(`/solicitudes/${id}/reactivar`, 'PATCH');
+      await Swal.fire({ icon: 'success', title: 'Solicitud reactivada', timer: 1400, showConfirmButton: false });
+      window.location.reload();
+    } catch (e) {
+      Swal.fire('Error', e.message, 'error');
+    }
+  }
+
+  async function eliminarSolicitud(id) {
+    const { value: texto, isConfirmed } = await Swal.fire({
+      icon: 'error',
+      title: 'Eliminar definitivamente',
+      html: '<p style="text-align:left">Se borrará la solicitud y sus revisiones. <strong>Esta acción no se puede deshacer.</strong></p><p style="text-align:left">Escriba <strong>ELIMINAR</strong> para confirmar:</p>',
+      input: 'text',
+      inputPlaceholder: 'ELIMINAR',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      confirmButtonText: 'Eliminar definitivamente',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+      inputValidator: (valor) => {
+        if (String(valor || '').trim().toUpperCase() !== 'ELIMINAR') {
+          return 'Debe escribir ELIMINAR para confirmar.';
+        }
+      },
+    });
+
+    if (!isConfirmed || String(texto || '').trim().toUpperCase() !== 'ELIMINAR') return;
+
+    try {
+      const datos = await llamar(`/solicitudes/${id}`, 'DELETE');
+      await Swal.fire({
+        icon: 'success',
+        title: 'Solicitud eliminada',
+        text: datos && datos.revisionesEliminadas
+          ? `También se eliminaron ${datos.revisionesEliminadas} revisión(es) asociada(s).`
+          : undefined,
+      });
+      window.location.reload();
+    } catch (e) {
+      Swal.fire('Error', e.message, 'error');
+    }
+  }
+</script>
+{{/if}}
