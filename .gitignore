@@ -61,3 +61,5 @@ _respaldo-*/
 # Instaladores de cambios (.ps1 con el paquete embebido)
 aplicar-*.ps1
 diagnostico-*.ps1
+
+COMMIT_MSG.tmp
