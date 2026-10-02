@@ -28,7 +28,11 @@ export class AuthController {
 
       res.cookie('access_token', result.token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        // "secure" solo cuando el sitio se sirva por HTTPS. Atarlo a
+        // NODE_ENV rompia el acceso por HTTP en la red interna: el
+        // navegador descartaba la cookie y el ingreso parecia recargar
+        // la pagina de login. Se activa con COOKIE_SECURE=true.
+        secure: process.env.COOKIE_SECURE === 'true',
         sameSite: 'lax',
         maxAge: 8 * 60 * 60 * 1000,
       });

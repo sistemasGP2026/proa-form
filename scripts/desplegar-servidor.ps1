@@ -169,6 +169,8 @@ if (Test-Path $rutaEnv) {
 # Generado por desplegar-servidor.ps1 - NO se sube al repositorio
 PORT=$Puerto
 MONGODB_URI=$MongoUri
+# true SOLO con HTTPS: en HTTP el navegador descarta la cookie de sesion.
+COOKIE_SECURE=false
 JWT_SECRET=$secreto
 JWT_EXPIRES=8h
 NODE_ENV=production
@@ -212,6 +214,7 @@ module.exports = {
     name: '$NOMBRE',
     script: 'dist/main.js',
     cwd: __dirname,          // la app lee el .env desde aqui
+    exec_mode: 'fork',       // igual que las demas aplicaciones del servidor
     instances: 1,
     autorestart: true,
     max_memory_restart: '400M',
