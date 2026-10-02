@@ -49,6 +49,22 @@ function Titulo($t) {
 }
 function Existe($cmd) { [bool](Get-Command $cmd -ErrorAction SilentlyContinue) }
 
+# No se usa 'pm2 jlist | ConvertFrom-Json': esa salida trae claves que solo
+# difieren en mayusculas (username / USERNAME) y ConvertFrom-Json de
+# PowerShell 5.1 las toma por duplicadas y aborta. Se consulta a pm2 directo.
+function Pm2Existe($nombre) {
+    if (-not (Existe 'pm2')) { return $false }
+    & pm2 describe $nombre *> $null
+    return ($LASTEXITCODE -eq 0)
+}
+function Pm2Pid($nombre) {
+    if (-not (Pm2Existe $nombre)) { return $null }
+    $salida = & pm2 pid $nombre 2>$null
+    $num = ($salida | Where-Object { $_ -match '^\s*\d+\s*$' } | Select-Object -Last 1)
+    if ($num) { return [int]($num.Trim()) }
+    return $null
+}
+
 $destino = Join-Path $Carpeta $NOMBRE
 
 # ─────────────────────── 1. Requisitos ───────────────────────
@@ -89,11 +105,7 @@ $enUso = Get-NetTCPConnection -State Listen -LocalPort $Puerto -ErrorAction Sile
 if ($enUso) {
     $pid_ = ($enUso | Select-Object -First 1).OwningProcess
     $proc = Get-Process -Id $pid_ -ErrorAction SilentlyContinue
-    $mio = $false
-    if (Existe 'pm2') {
-        $lista = & pm2 jlist 2>$null | ConvertFrom-Json
-        if ($lista | Where-Object { $_.name -eq $NOMBRE -and $_.pid -eq $pid_ }) { $mio = $true }
-    }
+    $mio = ((Pm2Pid $NOMBRE) -eq $pid_)
     if ($mio) { Escribir "  Ocupado por la propia aplicacion PROA (PID $pid_). Se reemplazara." 'Yellow' }
     else { throw "El puerto $Puerto lo ocupa '$($proc.ProcessName)' (PID $pid_), que no es PROA. Libere el puerto o use -Puerto otro." }
 } else {
@@ -214,15 +226,10 @@ else {
 
     Push-Location $destino
     try {
-        $yaEsta = (& pm2 jlist 2>$null | ConvertFrom-Json) | Where-Object { $_.name -eq $NOMBRE }
-        if ($yaEsta) {
-            & pm2 reload ecosystem.config.js --update-env
-            Escribir '  Aplicacion recargada.' 'Green'
-        } else {
-            & pm2 start ecosystem.config.js
-            Escribir '  Aplicacion iniciada.' 'Green'
-        }
+        # startOrReload: arranca si no estaba, recarga si ya corria.
+        & pm2 startOrReload ecosystem.config.js --update-env
         if ($LASTEXITCODE -ne 0) { throw "pm2 devolvio el codigo $LASTEXITCODE" }
+        Escribir '  Aplicacion en marcha.' 'Green'
         & pm2 save
     } finally { Pop-Location }
 }
