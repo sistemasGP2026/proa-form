@@ -15,6 +15,7 @@ import { RevisionesModule } from './revisiones/revisiones.module';
 import { AdminModule } from './admin/admin.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { AuthModule } from './auth/auth.module';
+import { CuentaModule } from './cuenta/cuenta.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { AuthModule } from './auth/auth.module';
     AdminModule,
     UsuariosModule,
     AuthModule,
+    CuentaModule,
   ],
 })
 export class AppModule {}

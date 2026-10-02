@@ -58,6 +58,8 @@
       <span class="user-name">{{#if usuario.nombre}}{{usuario.nombre}}{{else}}Usuario PROA{{/if}}</span>
       <span class="user-role">{{#if usuario.rol}}{{nombreRol usuario.rol}}{{else}}Usuario PROA{{/if}}</span>
     </div>
+    <a href="/cuenta/clave" class="btn-action" title="Cambiar mi contraseña"
+      style="margin-right: 0.5rem; text-decoration: none; white-space: nowrap;">Mi contraseña</a>
     <button type="button" class="btn-logout" onclick="cerrarSesion()" title="Cerrar Sesión">
       Salir
     </button>

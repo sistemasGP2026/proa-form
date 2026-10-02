@@ -8,8 +8,12 @@ export class CrearUsuario {
   @IsString() @IsNotEmpty()
   usuario!: string;
 
-  @IsString() @IsNotEmpty() @MinLength(6, { message: 'La contraseña debe tener al menos 6 caracteres' })
-  contraseña!: string;
+  /**
+   * Opcional: si no se envia, la cuenta nace con la contraseña inicial
+   * y queda marcada para que la persona la cambie al ingresar.
+   */
+  @IsOptional() @IsString() @MinLength(6, { message: 'La contraseña debe tener al menos 6 caracteres' })
+  contraseña?: string;
 
   @IsEnum(Rol, { message: 'El rol seleccionado no es válido' })
   rol!: Rol;

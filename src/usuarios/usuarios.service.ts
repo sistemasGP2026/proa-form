@@ -6,6 +6,12 @@ import { Usuario } from './entities/usuarios.entities';
 import { ActualizarUsuario, CrearUsuario } from './dto/crearUsuario.dto';
 import { toObjectId, toPlain } from 'src/utils/mongo.util';
 
+/**
+ * Contraseña con la que nace toda cuenta creada por el administrador.
+ * No es un secreto: la persona la cambia al ingresar por primera vez.
+ */
+export const CLAVE_INICIAL = '123456';
+
 @Injectable()
 export class UsuariosService {
   constructor(@InjectModel(Usuario.name) private readonly usuarioModel: Model<Usuario>) {}
@@ -46,7 +52,10 @@ export class UsuariosService {
       throw new BadRequestException(`El usuario ${data.usuario} ya se encuentra en uso`);
     }
 
-    const passwordHashed = await bcrypt.hash(data.contraseña, 10);
+    // Sin contraseña explicita la cuenta nace con la inicial y queda
+    // marcada para que la persona la cambie al ingresar.
+    const usaInicial = !data.contraseña;
+    const passwordHashed = await bcrypt.hash(data.contraseña ?? CLAVE_INICIAL, 10);
 
     const creado = await this.usuarioModel.create({
       usuario: data.usuario,
@@ -54,6 +63,7 @@ export class UsuariosService {
       rol: data.rol,
       contraseña: passwordHashed,
       activo: data.activo ?? true,
+      debeCambiarClave: usaInicial,
     });
 
     const usuarioSinPassword = await this.usuarioModel.findById(creado._id).lean().exec();
@@ -103,6 +113,8 @@ export class UsuariosService {
 
     if (contraseña) {
       cambios.contraseña = await bcrypt.hash(contraseña, 10);
+      // La reasigna el administrador: la persona debera cambiarla.
+      cambios.debeCambiarClave = true;
     }
 
     const guardado = await this.usuarioModel
@@ -111,5 +123,41 @@ export class UsuariosService {
       .exec();
 
     return toPlain(guardado);
+  }
+
+  /**
+   * Cambio de contraseña hecho por la propia persona.
+   * Exige la contraseña actual: nadie puede cambiarsela a otro por aqui.
+   */
+  async cambiarClavePropia(id: string, actual: string, nueva: string): Promise<void> {
+    const _id = toObjectId(id, 'usuario');
+
+    const usuario = await this.usuarioModel
+      .findOne({ _id, activo: true })
+      .select('+contraseña')
+      .lean()
+      .exec();
+
+    if (!usuario) {
+      throw new BadRequestException('La cuenta no existe o esta inhabilitada');
+    }
+
+    const coincide = await bcrypt.compare(actual, (usuario as any).contraseña ?? '');
+    if (!coincide) {
+      throw new BadRequestException('La contraseña actual no es correcta');
+    }
+
+    if (actual === nueva) {
+      throw new BadRequestException('La contraseña nueva debe ser distinta de la actual');
+    }
+
+    await this.usuarioModel
+      .findByIdAndUpdate(_id, {
+        $set: {
+          contraseña: await bcrypt.hash(nueva, 10),
+          debeCambiarClave: false,
+        },
+      })
+      .exec();
   }
 }

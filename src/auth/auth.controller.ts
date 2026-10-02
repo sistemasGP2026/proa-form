@@ -37,6 +37,12 @@ export class AuthController {
         maxAge: 8 * 60 * 60 * 1000,
       });
 
+      // Si la cuenta todavia tiene la contraseña inicial, se ofrece
+      // cambiarla; desde ahi se puede posponer y seguir al tablero.
+      if ((result.usuario as any)?.debeCambiarClave) {
+        return res.redirect('/cuenta/clave?inicial=1');
+      }
+
       return res.redirect('/admin');
 
     } catch (error: any) {

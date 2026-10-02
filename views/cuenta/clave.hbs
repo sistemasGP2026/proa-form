@@ -1,0 +1,85 @@
+<title>Programa PROA - Cambiar contraseña</title>
+<link rel="stylesheet" href="/admin/css/admin.styles.css">
+
+<div class="admin-page">
+  {{> admin_nav}}
+
+  <main class="admin-container">
+
+    <header class="admin-header">
+      <h1>Cambiar contraseña</h1>
+      <p>Solo usted puede cambiarla: hay que escribir la contraseña actual.</p>
+    </header>
+
+    {{#if esInicial}}
+    <div style="border-left: 3px solid #0284c7; background: #f8fafc; padding: 0.85rem 1rem; margin-bottom: 1rem;">
+      <strong>Su cuenta todavía tiene la contraseña inicial.</strong>
+      <span class="text-muted text-sm">
+        Puede cambiarla ahora o seguir y hacerlo más tarde desde el enlace
+        <strong>Mi contraseña</strong> de la barra superior.
+      </span>
+    </div>
+    {{/if}}
+
+    {{#if error}}
+    <div style="border-left: 3px solid #dc2626; background: #fef2f2; padding: 0.85rem 1rem; margin-bottom: 1rem;">
+      <strong style="color: #991b1b;">{{error}}</strong>
+    </div>
+    {{/if}}
+
+    <div class="admin-table-wrap" style="padding: 1.25rem; max-width: 520px;">
+      <form action="/cuenta/clave" method="POST">
+
+        <div class="form-group" style="margin-bottom: 0.9rem;">
+          <label for="actual">Contraseña actual</label>
+          <input type="password" id="actual" name="actual" class="admin-control" required autofocus
+            autocomplete="current-password">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0.9rem;">
+          <label for="nueva">Contraseña nueva</label>
+          <input type="password" id="nueva" name="nueva" class="admin-control" required minlength="6"
+            placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.1rem;">
+          <label for="confirmacion">Repita la contraseña nueva</label>
+          <input type="password" id="confirmacion" name="confirmacion" class="admin-control" required minlength="6"
+            autocomplete="new-password">
+        </div>
+
+        <div id="avisoLocal" class="text-sm" style="display: none; color: #991b1b; margin-bottom: 0.8rem;"></div>
+
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <button type="submit" class="btn-action btn-primary" style="padding: 0.6rem 1.2rem; cursor: pointer;">
+            Guardar
+          </button>
+          <a href="/admin" class="btn-action" style="display: inline-block; padding: 0.6rem 1.2rem; text-decoration: none;">
+            {{#if esInicial}}Más tarde{{else}}Cancelar{{/if}}
+          </a>
+        </div>
+
+      </form>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // Aviso inmediato si la confirmación no coincide; el servidor lo valida igual.
+  (function () {
+    var form = document.querySelector('form[action="/cuenta/clave"]');
+    var nueva = document.getElementById('nueva');
+    var confirmacion = document.getElementById('confirmacion');
+    var aviso = document.getElementById('avisoLocal');
+
+    form.addEventListener('submit', function (e) {
+      if (nueva.value !== confirmacion.value) {
+        e.preventDefault();
+        aviso.textContent = 'La confirmación no coincide con la contraseña nueva.';
+        aviso.style.display = 'block';
+        confirmacion.focus();
+      }
+    });
+  })();
+</script>

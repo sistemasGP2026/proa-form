@@ -21,6 +21,13 @@ export class Usuario {
   @Prop({ type: Boolean, default: true, index: true })
   activo!: boolean;
 
+  /**
+   * La cuenta todavia tiene la contrasena inicial que puso el
+   * administrador. Se apaga sola cuando la persona la cambia.
+   */
+  @Prop({ type: Boolean, default: false })
+  debeCambiarClave!: boolean;
+
   createdAt!: Date;
   updatedAt!: Date;
 }

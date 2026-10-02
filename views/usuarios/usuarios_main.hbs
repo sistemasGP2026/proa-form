@@ -97,13 +97,21 @@
                         required>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" id="grupoContrasena">
                     <label for="usuarioContrasena">
                         Contraseña <span id="hintContrasena" class="text-muted text-sm" hidden>(dejar en blanco para no
                             cambiarla)</span>
                     </label>
                     <input type="password" id="usuarioContrasena" class="admin-control" minlength="6"
                         placeholder="Mínimo 6 caracteres">
+                </div>
+
+                <div class="form-group" id="avisoClaveInicial" hidden>
+                    <div class="text-muted text-sm"
+                        style="border-left: 3px solid #0284c7; background: #f8fafc; padding: 0.6rem 0.8rem;">
+                        La contraseña inicial sera <strong>123456</strong>. La persona podra cambiarla
+                        al ingresar.
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -152,8 +160,11 @@
             document.getElementById('usuarioNombreCompleto').value = '';
             document.getElementById('usuarioUsuario').value = '';
             document.getElementById('usuarioContrasena').value = '';
-            document.getElementById('usuarioContrasena').required = true;
+            document.getElementById('usuarioContrasena').required = false;
             document.getElementById('hintContrasena').hidden = true;
+            // El administrador ya no escribe la contraseña: nace con la inicial.
+            document.getElementById('grupoContrasena').hidden = true;
+            document.getElementById('avisoClaveInicial').hidden = false;
             document.getElementById('usuarioRol').value = '';
             document.getElementById('usuarioActivo').checked = true;
             overlay.classList.add('active');
@@ -168,6 +179,8 @@
             document.getElementById('usuarioContrasena').value = '';
             document.getElementById('usuarioContrasena').required = false; // opcional al editar
             document.getElementById('hintContrasena').hidden = false;
+            document.getElementById('grupoContrasena').hidden = false;
+            document.getElementById('avisoClaveInicial').hidden = true;
             document.getElementById('usuarioRol').value = rol;
             document.getElementById('usuarioActivo').checked = Boolean(activo);
             overlay.classList.add('active');
