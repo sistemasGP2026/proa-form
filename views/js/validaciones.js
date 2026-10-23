@@ -86,7 +86,6 @@ document.addEventListener('DOMContentLoaded',
 
 
                     const campos = [
-                        ['cantidad', 'cantidad'],
                         ['dosis', 'dosis'],
                         ['unidadDosis', 'unidad de dosis'],
                         ['via', 'vía de administración'],

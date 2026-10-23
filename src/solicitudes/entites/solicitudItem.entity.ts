@@ -38,7 +38,7 @@ export class SolicitudItem {
    * En SQL Server el estado se guardaba en el catálogo de antibióticos,
    * lo que propagaba la suspensión a todas las solicitudes.
    */
-  @Prop({ type: String, enum: Object.values(AntibioticoState), default: AntibioticoState.APROBADO })
+  @Prop({ type: String, enum: Object.values(AntibioticoState), default: AntibioticoState.PENDIENTE })
   state!: AntibioticoState;
 
   @Prop({ type: String, default: null, maxlength: 1000 })

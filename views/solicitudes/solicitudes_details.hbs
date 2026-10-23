@@ -161,6 +161,10 @@
                         {{#if puedeDictaminar}}
                         <!-- Barra de acciones masivas sobre la tabla -->
 <div class="bulk-actions">
+                            <button class="btn-proa btn-proa-success btn-sm"
+                                onclick="dictaminarSeleccionados('APROBADO', '#16a34a')">
+                                Aprobar seleccionados
+                            </button>
                             <button class="btn-proa btn-proa-danger btn-sm"
                                 onclick="dictaminarSeleccionados('SUSPENDIDO', '#dc2626')">
                                 Suspender seleccionados
@@ -307,7 +311,7 @@
             return;
         }
 
-        const accionTexto = 'Suspender';
+        const accionTexto = nuevoEstado === 'APROBADO' ? 'Aprobar' : 'Suspender';
 
         const { value: observacion, isConfirmed } = await Swal.fire({
             title: `${accionTexto} ${seleccionados.length} medicamento(s)`,
@@ -320,7 +324,9 @@
             cancelButtonText: 'Cancelar',
             inputValidator: (value) => {
                 if (!value.trim()) {
-                    return 'Debe ingresar una observación para suspender los medicamentos seleccionados.';
+                    return nuevoEstado === 'APROBADO'
+                        ? 'Debe ingresar una observación para aprobar los medicamentos seleccionados.'
+                        : 'Debe ingresar una observación para suspender los medicamentos seleccionados.';
                 }
             }
         });
@@ -342,7 +348,7 @@
             if (res.ok) {
                 await Swal.fire({
                     icon: 'success',
-                    title: 'Suspensión registrada',
+                    title: nuevoEstado === 'APROBADO' ? 'Aprobación registrada' : 'Suspensión registrada',
                     timer: 1500,
                     showConfirmButton: false
                 });

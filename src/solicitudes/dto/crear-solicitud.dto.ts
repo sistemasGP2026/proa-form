@@ -20,8 +20,6 @@ class MedicamentoDto {
   @IsMongoId({ message: 'El antibiótico seleccionado no es válido' })
   antibioticoId!: string;
 
-  @Type(() => Number) cantidad!: number;
-
   @Type(() => Number)
   @IsNumber()
   dosis!: number;

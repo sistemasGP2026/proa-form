@@ -10,6 +10,7 @@ import { Solicitud } from './entites/solicitud.entity';
 import { Revision } from 'src/revisiones/entities/revision.entity';
 import { Antibiotico } from 'src/antibiotico/entities/antibioticos.entity';
 import { AntibioticoState } from 'src/antibiotico/entities/antibiotico.state';
+import { TipoAntibiotico } from 'src/antibiotico/entities/tipoAntibiotico.enum';
 import { ExcelParser } from 'src/utils/excelParser';
 import { toObjectId, toPlain } from 'src/utils/mongo.util';
 
@@ -57,8 +58,13 @@ export class SolicitudesService {
           viaAdministracion: med.via,
           fechaInicio: this.aFechaUtc(med.fechaInicio),
           fechaFin: this.calcularFechaFin(med.fechaInicio, Number(med.duracion)),
-          // Nace aprobada: el auditor PROA solo interviene para suspender.
-          state: AntibioticoState.APROBADO,
+          // Los restringidos nacen PENDIENTE, a la espera de que la
+          // quimica los apruebe o los suspenda. Los vigilados no
+          // necesitan ese visto bueno y nacen aprobados.
+          state:
+            (antibiotico as any).tipo === TipoAntibiotico.RESTRINGIDO
+              ? AntibioticoState.PENDIENTE
+              : AntibioticoState.APROBADO,
           observaciones: med.observaciones || null,
         };
       }),
@@ -485,8 +491,10 @@ export class SolicitudesService {
   private calcularEstadoItem(item: any, hoy: Date): AntibioticoState {
     if (item.state === AntibioticoState.SUSPENDIDO) return AntibioticoState.SUSPENDIDO;
 
-    // Los registros anteriores con el estado PENDIENTE, que ya no se genera,
-    // se leen como aprobados: hoy toda solicitud nace aprobada.
+    // Un restringido sin dictaminar sigue PENDIENTE aunque se le haya
+    // pasado la fecha: darlo por FINALIZADO ocultaria que nadie lo miro.
+    if (item.state === AntibioticoState.PENDIENTE) return AntibioticoState.PENDIENTE;
+
     if (item.fechaFin) {
       const fin = new Date(item.fechaFin);
       if (!Number.isNaN(fin.getTime()) && fin.getTime() < hoy.getTime()) {
@@ -502,6 +510,10 @@ export class SolicitudesService {
    */
   private calcularEstadoSolicitud(items: any[]): string {
     if (!items.length) return '';
+    // Prevalece lo que espera decision, luego lo suspendido.
+    if (items.some((item) => item.state === AntibioticoState.PENDIENTE)) {
+      return AntibioticoState.PENDIENTE;
+    }
     if (items.some((item) => item.state === AntibioticoState.SUSPENDIDO)) {
       return AntibioticoState.SUSPENDIDO;
     }
