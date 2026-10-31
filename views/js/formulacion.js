@@ -56,10 +56,12 @@
         option.textContent = i === 1 ? '1 día' : `${i} días`;
         select.appendChild(option);
       }
-      const otro = document.createElement('option');
-      otro.value = 'OTRO';
-      otro.textContent = 'Otro';
-      select.appendChild(otro);
+      [14, 21, 28].forEach(dias => {
+        const option = document.createElement('option');
+        option.value = dias;
+        option.textContent = dias + ' días';
+        select.appendChild(option);
+      });
     }
 
     function actualizarDuraciones() {

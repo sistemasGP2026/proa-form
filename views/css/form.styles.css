@@ -760,3 +760,5 @@ textarea.form-control {
     flex-direction: column-reverse;
   }
 }
+/* Campos condicionales: respetar el atributo hidden */
+[hidden] { display: none !important; }
